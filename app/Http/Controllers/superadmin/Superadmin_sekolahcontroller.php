@@ -16,11 +16,17 @@ class superadmin_sekolahcontroller extends Controller
     {
         $schools = School::latest()->get();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'List Data Sekolah',
-            'data' => $schools
-        ], 200);
+        // Mengembalikan View: resources/views/superadmin/sekolah/index.blade.php
+        return view('superadmin.sekolah.index', compact('schools'));
+    }
+
+    /**
+
+     */
+    public function create()
+    {
+        // Mengembalikan View: resources/views/superadmin/sekolah/create.blade.php
+        return view('superadmin.sekolah.create');
     }
 
     /**
@@ -28,29 +34,24 @@ class superadmin_sekolahcontroller extends Controller
      */
     public function store(Request $request)
     {
-
         $validator = $request->validate([
             'npsn'      => 'required|string|max:50|unique:schools,npsn',
             'name'      => 'required|string|max:255',
             'address'   => 'required|string',
+            // Jika nanti 'logo_url' berupa upload file, ubah validasi ini menjadi 'image|max:2048'
             'logo_url'  => 'required|string',
         ]);
 
-
         $data = $validator;
 
+        // Set default value sesuai logika bisnis Anda
         $data['subscription_status'] = 'active';
-
-
         $data['is_token_active'] = 1;
 
-        $school = School::create($data);
+        School::create($data);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Sekolah berhasil ditambahkan',
-            'data' => $school
-        ], 201);
+        return redirect()->route('sekolah.index')
+            ->with('success', 'Sekolah berhasil ditambahkan');
     }
 
     /**
@@ -58,16 +59,21 @@ class superadmin_sekolahcontroller extends Controller
      */
     public function show($id)
     {
-        $school = School::find($id);
+        $school = School::findOrFail($id);
 
-        if (!$school) {
-            return response()->json(['message' => 'Sekolah tidak ditemukan'], 404);
-        }
 
-        return response()->json([
-            'status' => true,
-            'data' => $school
-        ], 200);
+        return view('superadmin.sekolah.show', compact('school'));
+    }
+
+    /**
+
+     */
+    public function edit($id)
+    {
+        $school = School::findOrFail($id);
+
+
+        return view('superadmin.sekolah.edit', compact('school'));
     }
 
     /**
@@ -75,49 +81,34 @@ class superadmin_sekolahcontroller extends Controller
      */
     public function update(Request $request, $id)
     {
-        $school = School::find($id);
-
-        if (!$school) {
-            return response()->json(['message' => 'Sekolah tidak ditemukan'], 404);
-        }
+        $school = School::findOrFail($id);
 
         $validator = $request->validate([
             'npsn'      => ['required', 'string', 'max:50', Rule::unique('schools')->ignore($school->id)],
             'name'      => 'required|string|max:255',
             'address'   => 'required|string',
             'logo_url'  => 'required|string',
-
-
             'token_code'          => 'nullable|string',
-            'is_token_active'     => 'boolean', // 0 atau 1
+            'is_token_active'     => 'boolean', // Menerima 0 atau 1
             'subscription_status' => 'in:active,inactive',
         ]);
 
         $school->update($validator);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Data Sekolah berhasil diperbarui',
-            'data' => $school
-        ], 200);
+        return redirect()->route('sekolah.index')
+            ->with('success', 'Data Sekolah berhasil diperbarui');
     }
 
     /**
-
+     
      */
     public function destroy($id)
     {
-        $school = School::find($id);
-
-        if (!$school) {
-            return response()->json(['message' => 'Sekolah tidak ditemukan'], 404);
-        }
+        $school = School::findOrFail($id);
 
         $school->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Sekolah berhasil dihapus'
-        ], 200);
+        return redirect()->route('sekolah.index')
+            ->with('success', 'Sekolah berhasil dihapus');
     }
 }

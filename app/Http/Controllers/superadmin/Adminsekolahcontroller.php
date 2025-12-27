@@ -4,28 +4,35 @@ namespace App\Http\Controllers\superadmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class Adminsekolahcontroller extends Controller
+class AdminSekolahController extends Controller
 {
     /**
 
      */
     public function index()
     {
+        $schoolAdmins = User::with('school')
+            ->where('role', 'school_admin')
+            ->latest()
+            ->get();
 
-        $schoolAdmins = User::where('role', 'school_admin')
-                            ->with('school')
-                            ->latest()
-                            ->get();
+        return view('superadmin.school_admin.index', compact('schoolAdmins'));
+    }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'List Data School Admin',
-            'data' => $schoolAdmins
-        ], 200);
+    /**
+
+     */
+    public function create()
+    {
+
+        $schools = School::all();
+
+        return view('superadmin.school_admin.create', compact('schools'));
     }
 
     /**
@@ -33,8 +40,7 @@ class Adminsekolahcontroller extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi
-        $validator = $request->validate([
+        $validated = $request->validate([
             'school_id' => 'required|exists:schools,id',
             'username'  => 'required|string|max:50|unique:users,username',
             'email'     => 'required|email|max:100|unique:users,email',
@@ -44,24 +50,15 @@ class Adminsekolahcontroller extends Controller
             'avatar_url'=> 'nullable|string',
         ]);
 
-        // 2. Siapkan Data
-        $data = $validator;
-        $data['password'] = Hash::make($request->password);
+        $validated['password'] = Hash::make($request->password);
+        $validated['role'] = 'school_admin';
+        $validated['current_level'] = 0;
 
+        User::create($validated);
 
-        $data['role'] = 'school_admin';
-        $data['current_level'] = 0;
-
-
-
-
-        $user = User::create($data);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'School Admin berhasil dibuat',
-            'data' => $user
-        ], 201);
+        // Redirect ke halaman index dengan pesan sukses
+        return redirect()->route('admin-sekolah.index')
+            ->with('success', 'School Admin berhasil dibuat');
     }
 
     /**
@@ -69,22 +66,20 @@ class Adminsekolahcontroller extends Controller
      */
     public function show($id)
     {
-        $user = User::with('school')
-                    ->where('id', $id)
-                    ->where('role', 'school_admin')
-                    ->first();
+        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
 
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data School Admin tidak ditemukan'
-            ], 404);
-        }
+        return view('superadmin.school_admin.show', compact('user'));
+    }
 
-        return response()->json([
-            'status' => true,
-            'data' => $user
-        ], 200);
+    /**
+
+     */
+    public function edit($id)
+    {
+        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
+        $schools = School::all(); // Untuk dropdown edit
+
+        return view('superadmin.school_admin.edit', compact('user', 'schools'));
     }
 
     /**
@@ -92,14 +87,9 @@ class Adminsekolahcontroller extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::where('id', $id)->where('role', 'school_admin')->first();
+        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
 
-        if (!$user) {
-            return response()->json(['message' => 'User tidak ditemukan'], 404);
-        }
-
-
-        $validator = $request->validate([
+        $validated = $request->validate([
             'school_id' => 'exists:schools,id',
             'username'  => ['string', 'max:50', Rule::unique('users')->ignore($user->id)],
             'email'     => ['email', 'max:100', Rule::unique('users')->ignore($user->id)],
@@ -108,38 +98,28 @@ class Adminsekolahcontroller extends Controller
             'password'  => 'nullable|string|min:8',
         ]);
 
-        // Cek Password
         if ($request->filled('password')) {
-            $validator['password'] = Hash::make($request->password);
+            $validated['password'] = Hash::make($request->password);
         } else {
-            unset($validator['password']);
+            unset($validated['password']);
         }
 
-        $user->update($validator);
+        $user->update($validated);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Data School Admin berhasil diperbarui',
-            'data' => $user
-        ], 200);
+        return redirect()->route('admin-sekolah.index')
+            ->with('success', 'Data School Admin berhasil diperbarui');
     }
 
     /**
-
+     
      */
     public function destroy($id)
     {
-        $user = User::where('id', $id)->where('role', 'school_admin')->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User tidak ditemukan'], 404);
-        }
+        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
 
         $user->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'School Admin berhasil dihapus'
-        ], 200);
+        return redirect()->route('admin-sekolah.index')
+            ->with('success', 'School Admin berhasil dihapus');
     }
 }

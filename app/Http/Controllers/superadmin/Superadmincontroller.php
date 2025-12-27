@@ -8,134 +8,117 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class Superadmincontroller extends Controller
+class superadmincontroller extends Controller
 {
+    /**
 
-    public function index()
+     */
+    public function __construct()
     {
 
-        $admins = User::where('role', 'admin')
-                      ->latest()
-                      ->get();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'List Data Admin',
-            'data' => $admins
-        ], 200);
-    }
-
-
-    public function store(Request $request)
-    {
-        $validator = $request->validate([
-            'username'  => 'required|string|max:50|unique:users,username',
-            'email'     => 'required|email|max:100|unique:users,email',
-            'password'  => 'required|string|min:8',
-            'full_name' => 'required|string|max:100',
-            'domisili'  => 'nullable|string|max:100',
-            'avatar_url'=> 'nullable|string',
-        ]);
-
-
-        $data = $validator;
-        $data['password'] = Hash::make($request->password);
-
-
-        $data['role'] = 'admin';
-        $data['school_id'] = null;
-        $data['current_level'] = 0;
-
-
-
-        $user = User::create($data);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Admin berhasil dibuat',
-            'data' => $user
-        ], 201);
-    }
-
-
-    public function show(string $id)
-    {
-
-        $admin = User::where('id', $id)->where('role', 'admin')->first();
-
-        if (!$admin) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data Admin tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => $admin
-        ], 200);
-    }
-
-
-    public function update(Request $request, string $id)
-    {
-
-        $admin = User::where('id', $id)->where('role', 'admin')->first();
-
-        if (!$admin) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data Admin tidak ditemukan'
-            ], 404);
-        }
-
-        // Validasi
-        $validator = $request->validate([
-
-            'username'  => ['string', 'max:50', Rule::unique('users')->ignore($admin->id)],
-            'email'     => ['email', 'max:100', Rule::unique('users')->ignore($admin->id)],
-            'full_name' => 'string|max:100',
-            'domisili'  => 'nullable|string|max:100',
-            'password'  => 'nullable|string|min:8',
-        ]);
-
-
-        if ($request->filled('password')) {
-            $validator['password'] = Hash::make($request->password);
-        } else {
-            unset($validator['password']);
-        }
-
-
-        $admin->update($validator);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Data Admin berhasil diperbarui',
-            'data' => $admin
-        ], 200);
     }
 
     /**
 
      */
-    public function destroy(string $id)
+    public function index()
     {
-        // Cek data & role
-        $admin = User::where('id', $id)->where('role', 'admin')->first();
 
-        if (!$admin) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data Admin tidak ditemukan'
-            ], 404);
+        $admins = User::where('role', 'admin')->latest()->paginate(10);
+
+        return view('superadmin.admins.index', compact('admins'));
+    }
+
+    /**
+
+     */
+    public function create()
+    {
+        return view('superadmin.admins.create');
+    }
+
+    /**
+
+     */
+    public function store(Request $request)
+    {
+
+        $validatedData = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed', // Pastikan ada field password_confirmation di view
+        ]);
+
+
+        $validatedData['role'] = 'admin'; // Hardcode role sebagai admin
+        $validatedData['password'] = Hash::make($request->password);
+
+
+        User::create($validatedData);
+
+        return redirect()->route('superadmin.admins.index')
+            ->with('success', 'Akun Admin berhasil dibuat.');
+    }
+
+    /**
+
+     */
+    public function edit(User $admin)
+    {
+        // Opsional: Pastikan yang diedit benar-benar admin, bukan user lain/superadmin
+        if ($admin->role !== 'admin') {
+            abort(403, 'Anda hanya dapat mengedit akun Admin.');
+        }
+
+        return view('superadmin.admins.edit', compact('admin'));
+    }
+
+    /**
+
+     */
+    public function update(Request $request, User $admin)
+    {
+
+        $rules = [
+            'name'  => 'required|string|max:255',
+            // Rule unique mengabaikan email milik user yang sedang diedit saat ini
+            'email' => ['required', 'email', Rule::unique('users')->ignore($admin->id)],
+        ];
+
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'min:8|confirmed';
+        }
+
+        $validatedData = $request->validate($rules);
+
+
+        if ($request->filled('password')) {
+            $validatedData['password'] = Hash::make($request->password);
+        } else {
+
+            unset($validatedData['password']);
+        }
+
+
+        $admin->update($validatedData);
+
+        return redirect()->route('superadmin.admins.index')
+            ->with('success', 'Data Admin berhasil diperbarui.');
+    }
+
+    /**
+     
+     */
+    public function destroy(User $admin)
+    {
+        if ($admin->role !== 'admin') {
+            abort(403, 'Hanya akun Admin yang boleh dihapus.');
         }
 
         $admin->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Admin berhasil dihapus'
-        ], 200);
+        return redirect()->route('superadmin.admins.index')
+            ->with('success', 'Akun Admin berhasil dihapus.');
     }
 }

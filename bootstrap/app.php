@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,8 +18,29 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/resource.php'));
         },
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        //
+   ->withMiddleware(function (Middleware $middleware) {
+
+
+        $middleware->redirectUsersTo(function () {
+
+            $user = Auth::user();
+
+
+            if ($user->role === 'super_admin') {
+                return '/superadmin/dashboard';
+            }
+
+            if ($user->role === 'student') {
+                return '/student/dashboard'; //
+            }
+
+            return '/home';
+        });
+
+
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

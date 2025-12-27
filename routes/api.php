@@ -1,11 +1,12 @@
 <?php
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
 use App\Http\Controllers\superadmin\SchoolAdminController;
 use App\Http\Controllers\superadmin\SchoolController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
 use App\Http\Controllers\superadmin\Superadmincontroller;
+use App\Http\Controllers\UserController;
 
 Route::post('/superadmin/admins', [Superadmincontroller::class, 'store']);
 Route::get('/superadmin/admins', [Superadmincontroller::class, 'index']);
@@ -24,3 +25,6 @@ Route::post('/superadmin/school-admins', [Adminsekolahcontroller::class, 'store'
 Route::get('/superadmin/school-admins/{id}', [Adminsekolahcontroller::class, 'show']);
 Route::put('/superadmin/school-admins/{id}', [Adminsekolahcontroller::class, 'update']);
 Route::delete('/superadmin/school-admins/{id}', [Adminsekolahcontroller::class, 'destroy']);
+
+Route::get('/user/profile', [UserController::class, 'show']);
+Route::put('/user/profile', [UserController::class, 'update']);

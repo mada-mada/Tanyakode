@@ -9,10 +9,37 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function login()
-    {
-        return view('auth.login');
+
+
+public function login()
+{
+
+    // Cek apakah user sudah login?
+    if (Auth::check()) {
+        $role = Auth::user()->role;
+
+        // Jika sudah login, paksa pindah sesuai role
+        if ($role === 'super_admin') {
+            return redirect()->route('superadmin.dashboard');
+        }
+
+        if ($role === 'student') {
+            return redirect()->route('student.dashboard');
+        }
+
+        if ($role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($role === 'school_admin') {
+            return redirect()->route('school_admin.dashboard');
+        }
+
+        return redirect('/');
     }
+
+    return view('auth.login');
+}
 
     public function loginPost(Request $request)
     {
@@ -29,16 +56,16 @@ class AuthController extends Controller
 
             switch ($user->role) {
                 case 'super_admin':
-                    return redirect('superadmin/dashboard');
+                    return redirect()->route('superadmin.dashboard');
 
                 case 'admin':
-                    return redirect('admin/dashboard');
+                    return redirect('admin.dashboard');
 
                 case 'student':
-                    return redirect('student/dashboard');
+                    return redirect('student.dashboard');
 
                 case 'school_admin':
-                    return redirect('admin/dashboard');
+                    return redirect('admin.dashboard');
 
                 default:
                     return redirect('dashboard');
@@ -49,6 +76,12 @@ class AuthController extends Controller
         return back()->withErrors([
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
+
+        return response()
+        ->view('auth.login')
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', '0');
     }
 
 
@@ -98,11 +131,14 @@ class AuthController extends Controller
 
 
         Auth::login($user);
-
-
         return redirect('student/dashboard')->with('success', 'Registrasi berhasil! Selamat datang.');
     }
 
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/login')->with('success', 'Anda berhasil logout.');
+    }
 }
-
-?>
