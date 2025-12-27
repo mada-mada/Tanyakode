@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\School;
 
 class User extends Authenticatable
 {
@@ -19,6 +20,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'username',
+        'role',
         'email',
         'password',
         'full_name',
@@ -26,6 +28,7 @@ class User extends Authenticatable
         'nisn',
         'grade',
         'school_name',
+        'school_id',
         'school_category',
         'domisili',
         'current_level',
@@ -55,5 +58,12 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    public function school()
+    {
+
+        return $this->belongsTo(School::class, 'school_id');
     }
 }
