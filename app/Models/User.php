@@ -12,7 +12,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory,Notifiable;
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -33,6 +33,7 @@ class User extends Authenticatable
         'domisili',
         'current_level',
         'avatar_url',
+        'status',
         'created_at',
         'updated_at',
     ];
