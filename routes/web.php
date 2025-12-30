@@ -41,7 +41,7 @@ Route::middleware(['auth'])->group(function() {
 });
 
 
-// --- SUPER ADMIN ---
+// super admin
 Route::middleware(['auth', 'role:super_admin', CekUserIsActive::class]) // <--- Pasang Satpam Status Disini
     ->prefix('superadmin')
     ->name('superadmin.')
@@ -53,7 +53,7 @@ Route::middleware(['auth', 'role:super_admin', CekUserIsActive::class]) // <--- 
         Route::resource('admins', Superadmincontroller::class);
     });
 
-// --- STUDENT ---
+// student
     Route::middleware(['auth', 'role:student', CekUserIsActive::class]) // <--- Pasang Satpam Status Disini
         ->prefix('student')
         ->name('student.')
@@ -65,7 +65,7 @@ Route::middleware(['auth', 'role:super_admin', CekUserIsActive::class]) // <--- 
         Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
     });
 
-// --- ADMIN BIASA ---
+// admin
 Route::middleware(['auth', 'role:admin', CekUserIsActive::class]) // <--- Pasang Satpam Status Disini
     ->name('admin.')
     ->group(function () {
@@ -74,7 +74,7 @@ Route::middleware(['auth', 'role:admin', CekUserIsActive::class]) // <--- Pasang
         })->name('dashboard');
     });
 
-// --- SCHOOL ADMIN ---
+// school admin
 Route::middleware(['auth', 'role:school_admin', CekUserIsActive::class]) // <--- Pasang Satpam Status Disini
     ->name('school_admin.') // <--- Koreksi: Tambahkan titik (.) agar rapi (school_admin.dashboard)
     ->group(function () {
