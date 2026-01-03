@@ -97,14 +97,6 @@ class AuthController extends Controller
         'username'      => 'required|unique:users',
         'email'         => 'required|email|unique:users',
         'password'      => 'required|min:6|confirmed', // confirmed utk cek password_confirmation
-        'full_name'     => 'required',
-        // Validasi Field Tambahan (Nullable artinya boleh kosong)
-        'nis'           => 'nullable|numeric',
-        'nisn'          => 'nullable|numeric',
-        'school_name'   => 'nullable|string',
-        'school_category' => 'nullable|in:SMP,SMA',
-        'grade'         => 'nullable|in:1,2,3',
-        'domisili'      => 'nullable|string',
     ]);
 
     // 2. Buat User (Masukkan semua field dari form)
@@ -114,16 +106,7 @@ class AuthController extends Controller
         'password' => Hash::make($request->password),
         'role'     => 'student',
         'status'   => 'verify', // Status awal verify agar kena middleware OTP
-
-        // Data Tambahan
-        'full_name'       => $request->full_name,
-        'nis'             => $request->nis,
-        'nisn'            => $request->nisn,
-        'school_name'     => $request->school_name,
-        'school_category' => $request->school_category,
-        'grade'           => $request->grade,
-        'domisili'        => $request->domisili,
-        'current_level'   => 0, // Default level
+        'current_level'   => 0, // Default levelx
     ]);
 
     // 3. Panggil Fungsi Kirim OTP (Sama seperti sebelumnya)

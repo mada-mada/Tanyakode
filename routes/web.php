@@ -51,6 +51,7 @@ Route::middleware(['auth', 'role:super_admin', CekUserIsActive::class]) // <--- 
         })->name('dashboard');
 
         Route::resource('admins', Superadmincontroller::class);
+        
     });
 
 // student
