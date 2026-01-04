@@ -15,6 +15,7 @@ class Course extends Model
         'school_id',
         'created_by',
         'title',
+        'slug',
         'level',
         'price',
         'is_premium',

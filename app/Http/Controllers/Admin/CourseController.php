@@ -7,6 +7,7 @@ use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
@@ -48,6 +49,8 @@ class CourseController extends Controller
         } else {
             $validated['is_premium'] = 1;
         }
+
+        $validated['slug'] = Str::slug($validated['title']);
 
         $validated['school_id'] = $user->school_id;
         $validated['created_by'] = $user->id;
@@ -93,6 +96,9 @@ class CourseController extends Controller
             $validated['is_premium'] = 1;
         }
 
+        $validated['slug'] = Str::slug($validated['title']);
+
+
         $course->update($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil diperbarui.');
     }
@@ -106,4 +112,27 @@ class CourseController extends Controller
         $course->delete();
         return redirect()->route('courses.index')->with('success', 'Kursus dihapus.');
     }
+
+    /**
+     * Menampilkan Halaman Dashboard Admin.
+     */
+    public function dashboard()
+    {
+        $user = Auth::user();
+
+        // Hitung kursus berdasarkan role
+        $courseQuery = Course::query();
+
+        if ($user->role === 'school_admin') {
+            $courseQuery->where('school_id', $user->school_id);
+        } else if ($user->role === 'admin') {
+            $courseQuery->whereNull('school_id');
+        }
+
+        $totalCourses = $courseQuery->count();
+
+        // Kirim data ke view dashboard yang baru kita buat
+        return view('admin.dashboard', compact('totalCourses'));
+    }
 }
+

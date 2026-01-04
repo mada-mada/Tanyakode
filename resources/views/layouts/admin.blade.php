@@ -100,5 +100,7 @@
 <script src="{{ asset('admintle/plugins/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('admintle/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('admintle/dist/js/adminlte.js') }}"></script>
+
+@yield('js')
 </body>
 </html>

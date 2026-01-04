@@ -19,11 +19,6 @@ use App\Http\Controllers\Admin\ModuleContentController;
 // Import Middleware
 use App\Http\Middleware\CekUserIsActive;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
 
 // --- GROUP GUEST (Belum Login) ---
 Route::middleware(['guest'])->group(function () {
@@ -75,7 +70,7 @@ Route::middleware(['auth'])->group(function() {
         Route::middleware(['role:admin'])
             ->name('admin.')
             ->group(function () {
-                Route::get('/dashboard-admin', function () { return 'Halaman admin biasa'; })->name('dashboard');
+                Route::get('/dashboard-admin', function () { return view('admin.dashboard'); })->name('dashboard');
             });
 
         // --- SCHOOL ADMIN ---

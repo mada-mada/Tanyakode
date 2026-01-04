@@ -19,11 +19,11 @@ class ModuleContentController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content_type' => 'required|in:theory,practice',
+            'type' => 'required|in:theory,practice',
             'content_body' => 'required',
             'video_url' => 'nullable|url',
             'compiler_lang' => 'required_if:content_type,practice|nullable',
-            'practice_code_snippet' => 'nullable|string',
+            'practice_snippet' => 'nullable|string',
         ]);
 
         $validated['module_id'] = $module->id;
@@ -50,11 +50,11 @@ class ModuleContentController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content_type' => 'required|in:theory,practice',
+            'type' => 'required|in:theory,practice',
             'content_body' => 'required',
             'video_url' => 'nullable|url',
             'compiler_lang' => 'required_if:content_type,practice|nullable',
-            'practice_code_snippet' => 'nullable|string',
+            'practice_snippet' => 'nullable|string',
         ]);
 
         $content->update($validated);

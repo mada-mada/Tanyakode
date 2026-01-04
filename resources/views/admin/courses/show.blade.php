@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('layouts.admin')
 
 @section('title', 'Kelola Materi')
 
@@ -63,9 +63,12 @@
             </table>
 
             <hr>
-            <button class="btn btn-default btn-sm btn-block" onclick="openContentModal({{ $module->id }}, '{{ $module->title }}')">
-                <i class="fas fa-plus-circle"></i> Tambah Materi ke Bab Ini
-            </button>
+           <button type="button"
+                class="btn btn-default btn-sm btn-block btn-add-content"
+                data-id="{{ $module->id }}"
+                 data-title="{{ $module->title }}">
+                 <i class="fas fa-plus-circle"></i> Tambah Materi ke Bab Ini
+                </button>
         </div>
     </div>
     @endforeach
@@ -112,7 +115,7 @@
                         <div class="col-6">
                             <div class="form-group">
                                 <label>Tipe Konten</label>
-                                <select name="content_type" id="contentTypeSelect" class="form-control">
+                                <select name="type" id="contentTypeSelect" class="form-control">
                                     <option value="theory">Teori (Teks/Video)</option>
                                     <option value="practice">Praktek (Koding)</option>
                                 </select>
@@ -138,7 +141,7 @@
                         <div class="form-group">
                             <label>Kerangka Kode (Boilerplate)</label>
                             <div id="aceEditor" style="height: 200px; border: 1px solid #ccc;"></div>
-                            <input type="hidden" name="practice_code_snippet" id="snippetInput">
+                            <input type="hidden" name="practice_snippet" id="snippetInput">
                         </div>
                     </div>
 
@@ -157,63 +160,91 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('css')
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+@endsection
+
 
 @section('js')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
 
 <script>
-    var editor; // Variabel global untuk instance Ace
-
     $(document).ready(function() {
-        // Inisialisasi Summernote
-        $('.summernote').summernote({height: 100});
+        // Log ini akan muncul di Console Browser (F12 -> Console) jika script berhasil dimuat
+        console.log("Sistem Script CRUD Materi Berhasil Dimuat!");
 
-        // Setup Ace Editor awal
-        editor = ace.edit("aceEditor");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/php");
-    });
+        // 1. Inisialisasi Summernote
+        $('.summernote').summernote({
+            height: 150,
+            placeholder: 'Tulis materi atau instruksi di sini...'
+        });
 
-    // Fungsi Buka Modal & Set URL Action Dinamis
-    function openContentModal(moduleId, moduleTitle) {
-        // Reset form
-        $('#formContent')[0].reset();
-        $('.summernote').summernote('code', '');
-
-        // Set URL Action ke Route Store Content
-        // Ganti '999' dengan ID module yang diklik
-        var url = "{{ route('contents.store', ':id') }}";
-        url = url.replace(':id', moduleId);
-        $('#formContent').attr('action', url);
-
-        $('#modalContentTitle').text('Tambah Materi ke: ' + moduleTitle);
-        $('#modalAddContent').modal('show');
-    }
-
-    // Toggle Tampilan Form Berdasarkan Tipe
-    $('#contentTypeSelect').change(function() {
-        if($(this).val() === 'practice') {
-            $('#practiceArea').slideDown();
-            $('#theoryArea').slideUp();
-        } else {
-            $('#practiceArea').slideUp();
-            $('#theoryArea').slideDown();
+        // 2. Setup Ace Editor
+        var editor;
+        if ($('#aceEditor').length > 0) {
+            editor = ace.edit("aceEditor");
+            editor.setTheme("ace/theme/monokai");
+            editor.session.setMode("ace/mode/php");
         }
-    });
 
-    // Ganti Mode Bahasa Ace Editor
-    $('#compilerLang').change(function() {
-        var lang = $(this).val();
-        editor.session.setMode("ace/mode/" + lang);
-    });
+        // 3. EVENT LISTENER: Tombol Tambah Materi
+        // Menggunakan $(document).on agar bisa mendeteksi elemen meski di dalam card collapse
+        $(document).on('click', '.btn-add-content', function(e) {
+            e.preventDefault(); // Mencegah refresh halaman jika ada href="#"
 
-    // Simpan isi Ace Editor ke Hidden Input saat Submit
-    $('#formContent').on('submit', function() {
-        var code = editor.getValue();
-        $('#snippetInput').val(code);
+            // Ambil data dari tombol
+            var moduleId = $(this).data('id');
+            var moduleTitle = $(this).data('title');
+
+            console.log("Tombol diklik! Module ID: " + moduleId); // Debugging
+
+            // Reset form
+            $('#formContent')[0].reset();
+            $('.summernote').summernote('code', '');
+
+            // Reset dropdown ke default
+            $('#contentTypeSelect').val('theory').trigger('change');
+
+            // Set URL Action secara dinamis
+            // Route: /modules/{id}/contents
+            var url = "{{ route('contents.store', ':id') }}";
+            url = url.replace(':id', moduleId);
+            $('#formContent').attr('action', url);
+
+            // Ganti Judul Modal & Tampilkan
+            $('#modalContentTitle').text('Tambah Materi ke: ' + moduleTitle);
+            $('#modalAddContent').modal('show');
+        });
+
+        // 4. EVENT LISTENER: Toggle Tipe Konten
+        $('#contentTypeSelect').change(function() {
+            var selectedType = $(this).val();
+            if(selectedType === 'practice') {
+                $('#practiceArea').slideDown();
+                $('#theoryArea').slideUp();
+                if(editor) editor.resize();
+            } else {
+                $('#practiceArea').slideUp();
+                $('#theoryArea').slideDown();
+            }
+        });
+
+        // 5. Ganti Bahasa Compiler
+        $('#compilerLang').change(function() {
+            var lang = $(this).val();
+            if(editor) editor.session.setMode("ace/mode/" + lang);
+        });
+
+        // 6. Submit Form
+        $('#formContent').on('submit', function() {
+            if(editor) {
+                var code = editor.getValue();
+                $('#snippetInput').val(code);
+            }
+        });
     });
 </script>
-@stop
-@stop
+@endsection

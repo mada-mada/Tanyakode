@@ -12,7 +12,7 @@ class ModuleContent extends Model
         'title',
         'content_body',
         'video_url',
-        'practice_code_snippet',
+        'practice_snippet',
         'compiler_lang',
         'sort_order'
     ];
