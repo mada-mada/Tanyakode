@@ -3,122 +3,87 @@
 namespace App\Http\Controllers\superadmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class superadmincontroller extends Controller
+class Superadmincontroller extends Controller
 {
-    /**
-
-     */
-    public function __construct()
+    // Method khusus untuk Dashboard Utama
+    public function dashboard()
     {
-
+        return view('superadmin.dashboard');
     }
 
-    /**
-
-     */
+    // Method untuk menampilkan list Admin Internal
     public function index()
     {
-
-        $admins = User::where('role', 'admin')->latest()->paginate(10);
-
-        return view('superadmin.admins.index', compact('admins'));
+        // Ambil user yang role-nya admin (bukan superadmin, bukan admin_sekolah)
+        $admins = User::where('role', 'admin')->get();
+        return view('superadmin.admin.index', compact('admins'));
     }
 
-    /**
-
-     */
     public function create()
     {
-        return view('superadmin.admins.create');
+        return view('superadmin.admin.create');
     }
 
-    /**
-
-     */
     public function store(Request $request)
     {
-
-        $validatedData = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed', // Pastikan ada field password_confirmation di view
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6',
         ]);
 
+        User::create([
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'admin', // Paksa role jadi admin
+        ]);
 
-        $validatedData['role'] = 'admin'; // Hardcode role sebagai admin
-        $validatedData['password'] = Hash::make($request->password);
-
-
-        User::create($validatedData);
-
-        return redirect()->route('superadmin.admins.index')
-            ->with('success', 'Akun Admin berhasil dibuat.');
+        return redirect()->route('superadmin.admin.index')->with('success', 'Admin berhasil ditambahkan');
     }
 
-    /**
-
-     */
-    public function edit(User $admin)
+    public function edit($id)
     {
-        // Opsional: Pastikan yang diedit benar-benar admin, bukan user lain/superadmin
-        if ($admin->role !== 'admin') {
-            abort(403, 'Anda hanya dapat mengedit akun Admin.');
-        }
-
-        return view('superadmin.admins.edit', compact('admin'));
+        $user = User::findOrFail($id);
+        return view('superadmin.admin.edit', compact('user'));
     }
 
-    /**
-
-     */
-    public function update(Request $request, User $admin)
+    public function update(Request $request, $id)
     {
+        $user = User::findOrFail($id);
 
-        $rules = [
-            'name'  => 'required|string|max:255',
-            // Rule unique mengabaikan email milik user yang sedang diedit saat ini
-            'email' => ['required', 'email', Rule::unique('users')->ignore($admin->id)],
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'username' => ['required', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+        ]);
+
+        $data = [
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
         ];
 
-
         if ($request->filled('password')) {
-            $rules['password'] = 'min:8|confirmed';
+            $data['password'] = Hash::make($request->password);
         }
 
-        $validatedData = $request->validate($rules);
+        $user->update($data);
 
-
-        if ($request->filled('password')) {
-            $validatedData['password'] = Hash::make($request->password);
-        } else {
-
-            unset($validatedData['password']);
-        }
-
-
-        $admin->update($validatedData);
-
-        return redirect()->route('superadmin.admins.index')
-            ->with('success', 'Data Admin berhasil diperbarui.');
+        return redirect()->route('superadmin.admin.index')->with('success', 'Data admin berhasil diupdate');
     }
 
-    /**
-     
-     */
-    public function destroy(User $admin)
+    public function destroy($id)
     {
-        if ($admin->role !== 'admin') {
-            abort(403, 'Hanya akun Admin yang boleh dihapus.');
-        }
-
-        $admin->delete();
-
-        return redirect()->route('superadmin.admins.index')
-            ->with('success', 'Akun Admin berhasil dihapus.');
+        $user = User::findOrFail($id);
+        $user->delete();
+        return redirect()->route('superadmin.admin.index')->with('success', 'Admin berhasil dihapus');
     }
 }

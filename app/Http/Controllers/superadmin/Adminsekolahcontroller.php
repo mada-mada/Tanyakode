@@ -3,123 +3,89 @@
 namespace App\Http\Controllers\superadmin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\School;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class AdminSekolahController extends Controller
+class Adminsekolahcontroller extends Controller
 {
-    /**
-
-     */
     public function index()
     {
-        $schoolAdmins = User::with('school')
-            ->where('role', 'school_admin')
-            ->latest()
-            ->get();
-
-        return view('superadmin.school_admin.index', compact('schoolAdmins'));
+        // Mengambil user role school_admin beserta data sekolahnya
+        $school_admin = User::where('role', 'school_admin')->with('school')->get();
+        return view('superadmin.adminsekolah.index', compact('school_admin'));
     }
 
-    /**
-
-     */
     public function create()
     {
-
-        $schools = School::all();
-
-        return view('superadmin.school_admin.create', compact('schools'));
+        $sekolah = School::all();
+        return view('superadmin.adminsekolah.create', compact('sekolah'));
     }
 
-    /**
-
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
+            'full_name' => 'required|string',
+            'username' => 'required|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6',
             'school_id' => 'required|exists:schools,id',
-            'username'  => 'required|string|max:50|unique:users,username',
-            'email'     => 'required|email|max:100|unique:users,email',
-            'password'  => 'required|string|min:8',
-            'full_name' => 'required|string|max:100',
-            'domisili'  => 'nullable|string|max:100',
-            'avatar_url'=> 'nullable|string',
         ]);
 
-        $validated['password'] = Hash::make($request->password);
-        $validated['role'] = 'school_admin';
-        $validated['current_level'] = 0;
+        User::create([
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'school_admin',
+            'school_id' => $request->school_id,
+        ]);
 
-        User::create($validated);
-
-        // Redirect ke halaman index dengan pesan sukses
-        return redirect()->route('admin-sekolah.index')
-            ->with('success', 'School Admin berhasil dibuat');
+        // PERBAIKAN: Gunakan 'superadmin.adminsekolah.index'
+        return redirect()->route('superadmin.adminsekolah.index')->with('success', 'Admin Sekolah berhasil dibuat');
     }
 
-    /**
-
-     */
-    public function show($id)
-    {
-        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
-
-        return view('superadmin.school_admin.show', compact('user'));
-    }
-
-    /**
-
-     */
     public function edit($id)
     {
-        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
-        $schools = School::all(); // Untuk dropdown edit
-
-        return view('superadmin.school_admin.edit', compact('user', 'schools'));
+        $adminsekolah = User::findOrFail($id);
+        $sekolah = School::all();
+        return view('superadmin.adminsekolah.edit', compact('adminsekolah', 'sekolah'));
     }
 
-    /**
-
-     */
     public function update(Request $request, $id)
     {
-        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
+        $user = User::findOrFail($id);
 
-        $validated = $request->validate([
-            'school_id' => 'exists:schools,id',
-            'username'  => ['string', 'max:50', Rule::unique('users')->ignore($user->id)],
-            'email'     => ['email', 'max:100', Rule::unique('users')->ignore($user->id)],
-            'full_name' => 'string|max:100',
-            'domisili'  => 'nullable|string|max:100',
-            'password'  => 'nullable|string|min:8',
+        $request->validate([
+            'full_name' => 'required',
+            'username' => ['required', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'school_id' => 'required|exists:schools,id',
         ]);
 
+        $data = [
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'school_id' => $request->school_id,
+        ];
+
         if ($request->filled('password')) {
-            $validated['password'] = Hash::make($request->password);
-        } else {
-            unset($validated['password']);
+            $data['password'] = Hash::make($request->password);
         }
 
-        $user->update($validated);
+        $user->update($data);
 
-        return redirect()->route('admin-sekolah.index')
-            ->with('success', 'Data School Admin berhasil diperbarui');
+        // PERBAIKAN: Gunakan 'superadmin.adminsekolah.index'
+        return redirect()->route('superadmin.adminsekolah.index')->with('success', 'Data berhasil diupdate');
     }
 
-    /**
-     
-     */
     public function destroy($id)
     {
-        $user = User::where('id', $id)->where('role', 'school_admin')->firstOrFail();
-
-        $user->delete();
-
-        return redirect()->route('admin-sekolah.index')
-            ->with('success', 'School Admin berhasil dihapus');
+        User::findOrFail($id)->delete();
+        // PERBAIKAN: Gunakan 'superadmin.adminsekolah.index'
+        return redirect()->route('superadmin.adminsekolah.index')->with('success', 'User berhasil dihapus');
     }
 }

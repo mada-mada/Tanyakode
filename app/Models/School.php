@@ -14,7 +14,6 @@ class School extends Model
         'npsn',
         'name',
         'address',
-        'logo_url',
         'token_code',
         'is_token_active',
         'subscription_status',

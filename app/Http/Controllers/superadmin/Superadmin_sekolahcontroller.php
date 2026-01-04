@@ -3,112 +3,72 @@
 namespace App\Http\Controllers\superadmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\School;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Models\School;
 
-class superadmin_sekolahcontroller extends Controller
+class Superadmin_sekolahcontroller extends Controller
 {
-    /**
-
-     */
     public function index()
     {
-        $schools = School::latest()->get();
-
-        // Mengembalikan View: resources/views/superadmin/sekolah/index.blade.php
+        $schools = School::all();
         return view('superadmin.sekolah.index', compact('schools'));
     }
 
-    /**
-
-     */
     public function create()
     {
-        // Mengembalikan View: resources/views/superadmin/sekolah/create.blade.php
         return view('superadmin.sekolah.create');
     }
 
-    /**
-
-     */
     public function store(Request $request)
     {
-        $validator = $request->validate([
-            'npsn'      => 'required|string|max:50|unique:schools,npsn',
-            'name'      => 'required|string|max:255',
-            'address'   => 'required|string',
-            // Jika nanti 'logo_url' berupa upload file, ubah validasi ini menjadi 'image|max:2048'
-            'logo_url'  => 'required|string',
+        $request->validate([
+            'npsn' => 'required|unique:schools,npsn',
+            'name' => 'required|string|max:255',
+            'phone' => 'required',
+            'address' => 'required',
+            'email' => 'nullable|email',
         ]);
 
-        $data = $validator;
+        // Mengambil semua input dari form
+        $data = $request->all();
 
-        // Set default value sesuai logika bisnis Anda
+        // SET DEFAULT STATUS: Otomatis 'active' saat dibuat
         $data['subscription_status'] = 'active';
-        $data['is_token_active'] = 1;
 
         School::create($data);
 
-        return redirect()->route('sekolah.index')
-            ->with('success', 'Sekolah berhasil ditambahkan');
+        return redirect()->route('sekolah.index')->with('success', 'Sekolah berhasil ditambahkan');
     }
 
-    /**
-
-     */
-    public function show($id)
-    {
-        $school = School::findOrFail($id);
-
-
-        return view('superadmin.sekolah.show', compact('school'));
-    }
-
-    /**
-
-     */
     public function edit($id)
     {
         $school = School::findOrFail($id);
-
-
         return view('superadmin.sekolah.edit', compact('school'));
     }
 
-    /**
-
-     */
     public function update(Request $request, $id)
     {
         $school = School::findOrFail($id);
 
-        $validator = $request->validate([
-            'npsn'      => ['required', 'string', 'max:50', Rule::unique('schools')->ignore($school->id)],
-            'name'      => 'required|string|max:255',
-            'address'   => 'required|string',
-            'logo_url'  => 'required|string',
-            'token_code'          => 'nullable|string',
-            'is_token_active'     => 'boolean', // Menerima 0 atau 1
-            'subscription_status' => 'in:active,inactive',
+        $request->validate([
+          'npsn' => 'required|unique:schools,npsn',
+            'name' => 'required|string|max:255',
+            'phone' => 'required',
+            'address' => 'required',
+            'email' => 'nullable|email',
+            'subscription_status' => 'in:active,inactive'
         ]);
 
-        $school->update($validator);
+        // Kita gunakan $request->all() agar jika Anda menambahkan input status di form edit,
+        // ia akan otomatis terupdate. Jika tidak ada input status, status lama tetap aman.
+        $school->update($request->all());
 
-        return redirect()->route('sekolah.index')
-            ->with('success', 'Data Sekolah berhasil diperbarui');
+        return redirect()->route('sekolah.index')->with('success', 'Data sekolah berhasil diupdate');
     }
 
-    /**
-     
-     */
     public function destroy($id)
     {
-        $school = School::findOrFail($id);
-
-        $school->delete();
-
-        return redirect()->route('sekolah.index')
-            ->with('success', 'Sekolah berhasil dihapus');
+        School::findOrFail($id)->delete();
+        return redirect()->route('sekolah.index')->with('success', 'Sekolah berhasil dihapus');
     }
 }
