@@ -29,7 +29,7 @@ class AuthController extends Controller
 
             // Jika status active, baru cek role
             if ($user->role === 'super_admin') return redirect()->route('superadmin.dashboard');
-            if ($user->role === 'student') return redirect()->route('student.dashboard');
+            if ($user->role === 'student') return redirect()->route('user.dashboard');
             if ($user->role === 'admin') return redirect()->route('admin.dashboard');
             if ($user->role === 'school_admin') return redirect()->route('school_admin.dashboard');
 
@@ -69,7 +69,7 @@ class AuthController extends Controller
                 case 'admin':
                     return redirect()->route('admin.dashboard');
                 case 'student':
-                    return redirect()->route('student.dashboard');
+                    return redirect()->route('user.dashboard');
                 case 'school_admin':
                     return redirect()->route('school_admin.dashboard');
                 default:
@@ -86,7 +86,7 @@ class AuthController extends Controller
     // --- REGISTER PAGE (GET) ---
     public function register()
     {
-        return view('auth.register');
+        return view('Auth.register');
     }
 
     // --- PROSES REGISTER (POST) ---
@@ -134,7 +134,7 @@ class AuthController extends Controller
         try {
             Mail::to($user->email)->send(new OtpMail($user, $otpCode));
         } catch (\Exception $e) {
-            // Log error jika perlu: \Log::error($e->getMessage());
+            Log::error($e->getMessage());
         }
     }
 
@@ -150,7 +150,7 @@ class AuthController extends Controller
     // 1. Tampilkan Halaman Ganti Password
     public function changePasswordView()
     {
-        return view('auth.change-password');
+        return view('Auth.change-password');
     }
 
     // 2. Kirim OTP untuk Ganti Password

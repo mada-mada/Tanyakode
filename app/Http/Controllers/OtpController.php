@@ -17,7 +17,7 @@ class OtpController extends Controller
      */
     public function index()
     {
-        return view('auth.otp');
+        return view('Auth.otp');
     }
 
     /**
@@ -64,7 +64,7 @@ class OtpController extends Controller
                 return redirect()->route('superadmin.dashboard');
 
             case 'student':
-                return redirect()->route('student.dashboard');
+                return redirect()->route('user.dashboard');
 
             case 'admin':
                 return redirect()->route('admin.dashboard');

@@ -59,10 +59,10 @@ Route::middleware(['auth'])->group(function() {
 
         // --- STUDENT ---
         Route::middleware(['role:student'])
-            ->prefix('student')
-            ->name('student.')
+            ->prefix('user')
+            ->name('user.')
             ->group(function () {
-                Route::get('/dashboard', function () { return view('auth.change-password'); })->name('dashboard');
+                Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
                 Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
             });
 
