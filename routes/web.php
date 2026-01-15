@@ -10,6 +10,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\superadmin\Superadmincontroller;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
 use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
+use App\Http\Controllers\User\PaymentController;
 
 // Import Controller CRUD Admin/School Admin
 use App\Http\Controllers\Admin\CourseController;
@@ -64,6 +65,15 @@ Route::middleware(['auth'])->group(function() {
             ->group(function () {
                 Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
                 Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
+
+                // Daftar course
+                Route::get('/courses', [\App\Http\Controllers\User\PaymentController::class, 'index'])->name('courses.index');
+                // Detail course & proses buat Snap Token
+                Route::get('/course/{slug}', [\App\Http\Controllers\User\PaymentController::class, 'show'])->name('courses.show');
+                // Halaman sukses bayar
+                Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');
+                Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
+                Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
             });
 
         // --- ADMIN BIASA ---
@@ -99,5 +109,6 @@ Route::middleware(['auth'])->group(function() {
         });
 
     });
+
 
 });
