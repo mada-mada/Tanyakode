@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class UserCourseController extends Controller
 {
+    
+     public function index()
+    {
+        $courses = Course::all();
+        return view('user.courses.index', compact('courses'));
+    }
+    
     public function learning($slug)
     {
         // Ambil data course berdasarkan slug

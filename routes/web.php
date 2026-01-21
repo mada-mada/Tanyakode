@@ -70,8 +70,7 @@ Route::middleware(['auth'])->group(function() {
                 Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
 
                 // Daftar course
-                Route::get('/courses', [\App\Http\Controllers\User\PaymentController::class, 'index'])->name('courses.index');
-                // Detail course & proses buat Snap Token
+                Route::get('/courses', [\App\Http\Controllers\User\UserCourseController::class, 'index'])->name('courses.index');
                 Route::get('/course/{slug}', [\App\Http\Controllers\User\PaymentController::class, 'show'])->name('courses.show');
                 // Halaman sukses bayar
                 Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');

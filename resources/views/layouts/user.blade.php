@@ -424,6 +424,12 @@
                     <i class="fa-solid fa-book-open"></i>
                     <span>Kursus Saya</span>
                 </a>
+            </div>  
+            <div class="nav-item">
+                <a href="{{ route('user.courses.index') }}">    
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>Kursus</span>
+                </a>
             </div>
             <div class="nav-item">
                 <a href="#">

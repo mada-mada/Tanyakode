@@ -29,8 +29,8 @@
     
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h2 class="fw-bold text-dark" style="font-family: sans-serif;">Kursus</h2>
-            <p class="text-muted">Ikuti kursus yang tersedia untuk meningkatkan kemampuan Anda.</p>
+            <h2 class="fw-bold text-dark" style="font-family: sans-serif;">Kursus Saya</h2>
+            <p class="text-muted">Lanjutkan progres belajar Anda hari ini!</p>
         </div>
         
         <div class="search-wrapper" style="width: 300px;">
