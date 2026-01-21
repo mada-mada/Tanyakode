@@ -12,6 +12,7 @@ use App\Http\Controllers\superadmin\Adminsekolahcontroller;
 use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
 use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\SpinGameController; // Pastikan ini terimport
+use App\Http\Controllers\User\UserCourseController;
 
 // Import Controller CRUD Admin/School Admin
 use App\Http\Controllers\Admin\CourseController;
@@ -77,7 +78,7 @@ Route::middleware(['auth'])->group(function() {
                 Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
                 Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
-                Route::get('/course/{slug}/learning', [CourseController::class, 'learning'])->name('courses.learning');
+                Route::get('/course/{slug}/learning', [App\Http\Controllers\User\UserCourseController::class, 'learning'])->name('courses.learning');
             });
 
         // --- GAME SPIN WHEEL ---
