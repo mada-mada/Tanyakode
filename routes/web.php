@@ -63,21 +63,29 @@ Route::middleware(['auth'])->group(function() {
 
         // --- STUDENT ---
         Route::middleware(['role:student'])
-            ->prefix('user')
-            ->name('user.')
+            ->prefix('user') // Prefix ini otomatis menambahkan '/user' di depan semua route di bawah
+            ->name('user.')  // Prefix nama route, misal: user.dashboard
             ->group(function () {
                 Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
                 Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
 
                 // Daftar course
                 Route::get('/courses', [\App\Http\Controllers\User\UserCourseController::class, 'index'])->name('courses.index');
-                Route::get('user/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
-                // Halaman sukses bayar
+                
+                // Detail Course (HAPUS 'user/' di depan)
+                // URL Menjadi: /user/course/{slug}
+                Route::get('course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
+
+                // --- PERBAIKAN ROUTE LEARNING ---
+                // Menggunakan parameter optional {contentId?} agar satu baris bisa menangani 2 kondisi
+                // URL Menjadi: /user/course/{slug}/learning  ATAU /user/course/{slug}/learning/{contentId}
+                Route::get('course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');
+
+                // Payment Routes
                 Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');
                 Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
                 Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
-                Route::get('user/course/{slug}/learning', [UserCourseController::class, 'learning'])->name('courses.learning');
                 Route::post('/payment/check-voucher', [App\Http\Controllers\User\PaymentController::class, 'checkVoucher'])->name('payment.check_voucher'); 
             });
 
