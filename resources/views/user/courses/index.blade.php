@@ -15,7 +15,8 @@
 
     .btn-start { background-color: #0B132B; color: white; border-radius: 8px; font-weight: 600; }
     .btn-start:hover { background-color: #1C2541; color: white; }
-    .card-custom { border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .card-custom { border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .card-custom:hover { transform: translateY(-5px); }
     
     /* Tombol Filter */
     .filter-btn { border: 1px solid #e2e8f0; color: #64748b; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; background: white; transition: all 0.2s; }
@@ -50,18 +51,9 @@
     </div>
 
     <div class="row">
-        {{-- Looping Data Course dari Database --}}
         @forelse($courses as $course)
             @php
-                // --- LOGIKA INISIAL (Mengambil huruf depan dari 2 kata pertama judul) ---
-                $words = explode(' ', $course->title);
-                $initials = '';
-                foreach($words as $index => $word) {
-                    if($index < 2) $initials .= strtoupper(substr($word, 0, 1));
-                }
-
                 // --- LOGIKA WARNA BADGE ---
-                // Menyesuaikan dengan data di database (misal: 'pemula', 'beginner', dll)
                 $levelConfig = match(strtolower($course->level)) {
                     'pemula', 'beginner' => ['label' => 'Beginner', 'class' => 'badge-beginner'],
                     'menengah', 'intermediate' => ['label' => 'Intermediate', 'class' => 'badge-intermediate'],
@@ -73,19 +65,33 @@
             <div class="col-12 col-md-6 col-lg-4 mb-4">
                 <div class="card card-custom h-100">
                     
-                    {{-- Bagian Header Kartu (Background Gelap + Inisial) --}}
-                    <div class="bg-dark-theme p-5 position-relative text-center d-flex justify-content-center align-items-center" style="height: 220px;">
+                    {{-- HEADER KARTU: Gambar atau Inisial --}}
+                    <div class="position-relative text-center d-flex justify-content-center align-items-center overflow-hidden bg-dark-theme" style="height: 220px;">
                         
-                        <span class="badge {{ $levelConfig['class'] }} position-absolute" style="top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px;">
+                        {{-- Badge Level (Absolute) --}}
+                        <span class="badge {{ $levelConfig['class'] }} position-absolute" style="top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; z-index: 10;">
                             {{ $levelConfig['label'] }}
                         </span>
 
-                        <h1 class="text-cyan-theme fw-bold m-0" style="font-size: 8rem; letter-spacing: -5px; line-height: 1;">
-                            {{ $initials }}
-                        </h1>
+                        @if($course->thumbnail_url)
+                            {{-- TAMPILKAN GAMBAR JIKA ADA --}}
+                            <img src="{{ asset('storage/' . $course->thumbnail_url) }}" alt="{{ $course->title }}" class="w-100 h-100" style="object-fit: cover;">
+                        @else
+                            {{-- TAMPILKAN INISIAL JIKA TIDAK ADA GAMBAR --}}
+                            @php
+                                $words = explode(' ', $course->title);
+                                $initials = '';
+                                foreach($words as $index => $word) {
+                                    if($index < 2) $initials .= strtoupper(substr($word, 0, 1));
+                                }
+                            @endphp
+                            <h1 class="text-cyan-theme fw-bold m-0" style="font-size: 8rem; letter-spacing: -5px; line-height: 1;">
+                                {{ $initials }}
+                            </h1>
+                        @endif
                     </div>
 
-                    {{-- Bagian Body Kartu --}}
+                    {{-- BODY KARTU --}}
                     <div class="card-body p-4 d-flex flex-column">
                         <h5 class="fw-bold text-dark mb-2">{{ $course->title }}</h5>
                         
@@ -97,11 +103,10 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="fw-bold text-dark">Harga</span>
                                 <span class="fw-bold text-success" style="font-size: 1.1rem;">
-                                    Rp {{ number_format($course->price, 0, ',', '.') }}
+                                    {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'Gratis' }}
                                 </span>
                             </div>
                             
-                            {{-- Tombol Detail --}}
                             <a href="{{ route('user.courses.show', $course->id) }}" class="btn btn-start w-100 py-3">
                                 Lihat Detail <i class="fas fa-arrow-right ms-2"></i>
                             </a>

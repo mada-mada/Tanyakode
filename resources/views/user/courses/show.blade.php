@@ -2,74 +2,34 @@
 
 @section('content')
 
-{{-- STYLE KHUSUS: Layout Stabil & Bersih --}}
+{{-- STYLE KHUSUS --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
 
     /* HERO SECTION */
     .hero-section {
         background: radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 90%);
-        color: white;
-        padding-top: 60px;
-        padding-bottom: 80px;
-        position: relative;
-        overflow: hidden;
+        color: white; padding-top: 60px; padding-bottom: 80px; position: relative; overflow: hidden;
     }
-    
     .hero-bg-pattern {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px);
-        background-size: 40px 40px;
-        opacity: 0.05;
+        background-size: 40px 40px; opacity: 0.05;
     }
+    .main-content { margin-top: -40px; position: relative; z-index: 10; }
+    @media (max-width: 991.98px) { .hero-section { padding-bottom: 40px; } .main-content { margin-top: 0; } }
 
-    .main-content {
-        margin-top: -40px;
-        position: relative;
-        z-index: 10;
-    }
-
-    @media (max-width: 991.98px) {
-        .hero-section { padding-bottom: 40px; }
-        .main-content { margin-top: 0; }
-    }
-
-    .card-clean {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    .sidebar-sticky {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 100px;
-        z-index: 99;
-    }
+    .card-clean { background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+    .sidebar-sticky { position: -webkit-sticky; position: sticky; top: 100px; z-index: 99; }
 
     .btn-primary-custom {
         background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
-        border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px;
-        transition: all 0.3s; display: block; width: 100%;
-        box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3);
-        cursor: pointer;
+        border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px; transition: all 0.3s; display: block; width: 100%;
+        box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3); cursor: pointer;
     }
-    .btn-primary-custom:hover { 
-        transform: translateY(-2px); 
-        box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.4); color: white; 
-        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-    }
-    .btn-primary-custom:disabled {
-        background: #cbd5e1;
-        transform: none;
-        box-shadow: none;
-        cursor: not-allowed;
-    }
+    .btn-primary-custom:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.4); color: white; }
+    .btn-primary-custom:disabled { background: #cbd5e1; transform: none; box-shadow: none; cursor: not-allowed; }
 
     .accordion-item { border: 1px solid #f1f5f9; margin-bottom: 10px; border-radius: 12px !important; overflow: hidden; }
     .accordion-button { background-color: white; font-weight: 600; color: #1e293b; padding: 16px 20px; box-shadow: none !important; }
@@ -83,11 +43,9 @@
     }
     .thumbnail-box img { width: 100%; height: 100%; object-fit: cover; }
     .thumbnail-placeholder { color: rgba(255,255,255,0.2); font-size: 3rem; }
-    
     .tab-btn { border-radius: 50px; padding: 8px 24px; font-weight: 600; }
 </style>
 
-{{-- LOGIKA HITUNG DATA --}}
 @php
     $totalContent = 0;
     if($course->modules) {
@@ -191,21 +149,18 @@
             <div class="sidebar-sticky"> 
                 <div class="card-clean p-4">
                     
-                    {{-- Thumbnail --}}
+                    {{-- PERUBAHAN: Menghapus Overlay Play Button --}}
                     <div class="thumbnail-box shadow-sm">
-                        @if(!empty($course->cover) && file_exists(storage_path('app/public/' . $course->cover)))
-                            <img src="{{ asset('storage/' . $course->cover) }}" alt="{{ $course->title }}">
+                        @if($course->thumbnail_url)
+                            <img src="{{ asset('storage/' . $course->thumbnail_url) }}" alt="{{ $course->title }}">
                         @else
                             <div class="thumbnail-placeholder"><i class="fas fa-laptop-code"></i></div>
                         @endif
-                        <div class="position-absolute bg-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 50px; height: 50px;">
-                            <i class="fas fa-play text-primary ml-1"></i>
-                        </div>
+                        
+                        {{-- DIV Ikon Play Button sudah dihapus di sini --}}
                     </div>
 
                     {{-- === FITUR VOUCHER & HARGA DINAMIS === --}}
-                    
-                    {{-- Form Voucher --}}
                     @auth
                     @if($course->price > 0 && !auth()->user()->hasPurchased($course->id))
                         <div class="mb-3">
@@ -219,7 +174,6 @@
                     @endif
                     @endauth
 
-                    {{-- Rincian Harga --}}
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="text-muted small">Harga Kursus</span>
@@ -230,7 +184,6 @@
                             @endif
                         </div>
 
-                        {{-- Baris Diskon (Hidden Default) --}}
                         <div class="d-flex justify-content-between align-items-center mb-1 text-success" id="discount-row" style="display: none;">
                             <span class="small">Diskon Voucher</span>
                             <span class="small fw-bold" id="display-discount">- Rp 0</span>
@@ -248,7 +201,6 @@
                         </div>
                     </div>
 
-                    {{-- TOMBOL ACTION & PAYMENT LOGIC --}}
                     <div class="d-grid gap-2 mb-4">
                         @auth
                             @if(auth()->user()->hasPurchased($course->id))
@@ -278,7 +230,6 @@
                         @endauth
                     </div>
 
-                    {{-- Fitur --}}
                     <div class="bg-light p-3 rounded-3">
                         <h6 class="fw-bold mb-3 small text-uppercase text-muted">Benefit Kursus:</h6>
                         <ul class="list-unstyled d-flex flex-column gap-2 text-sm text-dark mb-0">
@@ -299,25 +250,18 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
-
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // --- 1. SETUP VARIABLE ---
             const payButton = document.getElementById('pay-button');
             const voucherBtn = document.getElementById('apply-voucher-btn');
             const voucherInput = document.getElementById('voucher-code');
             const loadingIndicator = document.getElementById('loading-payment');
-            
-            // State Harga & Voucher
             let currentVoucherId = null; 
             let originalPrice = {{ $course->price }};
-            
-            // Helper Format Rupiah
             const formatRupiah = (number) => {
                 return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
             }
 
-            // --- 2. LOGIKA CEK VOUCHER ---
             if (voucherBtn) {
                 voucherBtn.addEventListener('click', async function() {
                     const code = voucherInput.value.trim();
@@ -330,8 +274,6 @@
                         feedback.innerHTML = '<span class="text-danger">Masukkan kode voucher.</span>';
                         return;
                     }
-
-                    // UI Loading
                     voucherBtn.disabled = true;
                     voucherBtn.innerText = '...';
 
@@ -343,64 +285,35 @@
                                 "X-CSRF-TOKEN": "{{ csrf_token() }}",
                                 "Accept": "application/json"
                             },
-                            body: JSON.stringify({
-                                code: code,
-                                course_id: "{{ $course->id }}"
-                            })
+                            body: JSON.stringify({ code: code, course_id: "{{ $course->id }}" })
                         });
-
                         const data = await response.json();
-
                         if (response.ok && data.status === 'success') {
-                            // Sukses: Simpan ID Voucher
                             currentVoucherId = data.data.voucher_id;
-                            
-                            // Update UI
                             feedback.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
                             voucherInput.classList.add('is-valid');
-                            voucherInput.classList.remove('is-invalid');
                             voucherInput.disabled = true; 
                             voucherBtn.innerText = 'Terpasang';
-
-                            // Update Harga di Tampilan
                             discountRow.style.display = 'flex';
                             displayDiscount.innerText = '- ' + formatRupiah(data.data.discount);
                             displayFinal.innerText = formatRupiah(data.data.final_price);
-
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Voucher Berhasil!',
-                                text: `Anda hemat ${formatRupiah(data.data.discount)}`,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-
                         } else {
                             throw new Error(data.message || 'Voucher tidak valid.');
                         }
-
                     } catch (error) {
-                        console.error(error);
-                        currentVoucherId = null; // Reset voucher
-                        
+                        currentVoucherId = null; 
                         feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${error.message}</span>`;
-                        voucherInput.classList.add('is-invalid');
                         voucherBtn.disabled = false;
                         voucherBtn.innerText = 'Gunakan';
-                        
-                        // Sembunyikan baris diskon
                         discountRow.style.display = 'none';
                         displayFinal.innerText = formatRupiah(originalPrice);
                     }
                 });
             }
 
-            // --- 3. LOGIKA PEMBAYARAN (PROCESS) ---
             if (payButton) {
                 payButton.addEventListener('click', async function(e) {
                     e.preventDefault();
-
-                    // UI Loading
                     payButton.disabled = true;
                     payButton.innerHTML = 'Memuat...';
                     loadingIndicator.style.display = 'block';
@@ -416,59 +329,28 @@
                             body: JSON.stringify({
                                 course_id: "{{ $course->id }}",
                                 price: "{{ $course->price }}",
-                                voucher_id: currentVoucherId // Kirim ID Voucher jika ada
+                                voucher_id: currentVoucherId
                             })
                         });
-
                         const data = await response.json();
-
-                        // Reset UI
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>';
 
-                        // --- HANDLE RESPONSE ---
-                        
-                        // KASUS 1: Ternyata sudah lunas (User reload/tutup tab sebelumnya)
                         if (data.status === 'paid') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Pembayaran Ditemukan!',
-                                text: 'Sistem menemukan pembayaran Anda sebelumnya. Halaman akan dimuat ulang.',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload(); 
-                            });
-                        } 
-                        // KASUS 2: Transaksi Baru / Lanjut Bayar (Munculkan Snap)
-                        else if (data.status === 'success' || data.status === 'pending') {
+                            window.location.reload(); 
+                        } else if (data.status === 'success' || data.status === 'pending') {
                             window.snap.pay(data.snap_token, {
-                                onSuccess: function(result) {
-                                    window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement";
-                                },
-                                onPending: function(result) {
-                                    Swal.fire('Menunggu', 'Selesaikan pembayaran Anda.', 'info');
-                                },
-                                onError: function(result) {
-                                    Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
-                                },
-                                onClose: function() {
-                                    Swal.fire('Dibatalkan', 'Anda menutup popup.', 'warning');
-                                }
+                                onSuccess: function(result) { window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement"; },
+                                onPending: function(result) { Swal.fire('Menunggu', 'Selesaikan pembayaran Anda.', 'info'); },
+                                onError: function(result) { Swal.fire('Gagal', 'Pembayaran gagal.', 'error'); }
                             });
-                        } 
-                        // KASUS 3: Gratis (Diskon 100%)
-                        else if (data.status === 'free') {
+                        } else if (data.status === 'free') {
                             window.location.href = data.redirect_url;
-                        } 
-                        // KASUS 4: Error
-                        else {
+                        } else {
                             Swal.fire('Gagal', data.message || 'Gagal memproses.', 'error');
                         }
-
                     } catch (error) {
-                        console.error('Error:', error);
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Coba Lagi';
