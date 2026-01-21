@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Verifikasi OTP</title>
+  {{-- Judul Halaman Dinamis --}}
+  <title>{{ $title ?? 'Verifikasi OTP' }}</title>
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
   
@@ -220,13 +221,24 @@
         <div class="right-panel">
             
             <div class="text-center mb-5">
-                <h2 style="font-weight: 700; font-size: 28px; margin-bottom: 8px; color: #1e293b;">SekolahCerdas</h2>
-                <p style="color: #64748b; font-size: 14px;">Verifikasi Identitas Anda</p>
+                {{-- JUDUL DINAMIS: Bisa berubah tergantung dari Controller --}}
+                <h2 style="font-weight: 700; font-size: 28px; margin-bottom: 8px; color: #1e293b;">
+                    {{ $title ?? 'SekolahCerdas' }}
+                </h2>
+                <p style="color: #64748b; font-size: 14px;">
+                    {{ $message ?? 'Verifikasi Identitas Anda' }}
+                </p>
             </div>
 
             <p class="text-center mb-4" style="color: #334155; font-size: 14px;">
                 Masukkan 6 digit kode yang dikirim ke email:<br>
-                <strong style="color: #0f172a; font-size: 15px;">{{ Auth::user()->email }}</strong>
+               <strong style="color: #0f172a; font-size: 15px;">
+                  @if(Auth::check())
+                            {{ Auth::user()->email }}  {{-- Jika User Login (Ganti Pass) --}}
+                    @else
+                            {{ session('reset_email') }} {{-- Jika User Tamu (Lupa Pass) --}}
+                    @endif
+                      </strong>
             </p>
 
             @if (session('error'))
@@ -240,7 +252,12 @@
                 </div>
             @endif
 
-            <form action="{{ route('otp.check') }}" method="post">
+            {{-- 
+                FORM ACTION DINAMIS:
+                Jika variabel $actionUrl dikirim dari controller (saat ganti password), pakai itu.
+                Jika tidak (saat login biasa), pakai route default 'otp.check'.
+            --}}
+            <form action="{{ $actionUrl ?? route('otp.check') }}" method="post">
                 @csrf
                 
                 <div class="input-group-custom">
@@ -267,12 +284,21 @@
             </div>
             
             <div class="text-center mt-4 pt-4 border-top">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-link text-muted p-0" style="font-size: 13px; text-decoration: none; color: #94a3b8;">
-                        <i class="fas fa-sign-out-alt mr-1"></i> Ganti Akun
-                    </button>
-                </form>
+                {{-- LOGIKA TOMBOL BAWAH --}}
+                @if(Route::currentRouteName() == 'password.change.otp')
+                    {{-- Jika sedang proses Ganti Password, tombolnya 'Batal' --}}
+                    <a href="{{ route('password.change') }}" class="btn btn-link text-muted p-0" style="font-size: 13px; text-decoration: none; color: #94a3b8;">
+                        <i class="fas fa-arrow-left mr-1"></i> Batal, Kembali
+                    </a>
+                @else
+                    {{-- Jika sedang proses Aktivasi Login, tombolnya 'Logout' --}}
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-link text-muted p-0" style="font-size: 13px; text-decoration: none; color: #94a3b8;">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Ganti Akun
+                        </button>
+                    </form>
+                @endif
             </div>
 
         </div>

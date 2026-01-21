@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Otp;
@@ -14,198 +16,217 @@ use App\Mail\OtpMail;
 
 class AuthController extends Controller
 {
-    // --- LOGIN PAGE (GET) ---
-    public function login()
-    {
-        // 1. Cek apakah user sudah login?
-        if (Auth::check()) {
-            $user = Auth::user();
-
-            // [LOGIKA PENTING] Cek Status DULU sebelum cek Role
-            // Jika user login tapi status masih 'verify', tendang ke halaman OTP
-            if ($user->status === 'verify') {
-                return redirect()->route('otp.verification');
-            }
-
-            // Jika status active, baru cek role
-            if ($user->role === 'super_admin') return redirect()->route('superadmin.dashboard');
-            if ($user->role === 'student') return redirect()->route('user.dashboard');
-            if ($user->role === 'admin') return redirect()->route('admin.dashboard');
-            if ($user->role === 'school_admin') return redirect()->route('school_admin.dashboard');
-
-            return redirect('/');
-        }
-
-        // 2. Tampilkan Halaman Login dengan Header Anti-Cache
-        // Ini ditaruh DISINI, bukan di loginPost.
-        return response()
-            ->view('auth.login')
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', '0');
+    // --- AUTH DASAR (Login/Register/Logout) ---
+    
+    public function login() {
+        if (Auth::check()) return redirect('/'); 
+        // Redirect user jika sudah login (bisa disesuaikan role)
+        return view('Auth.login');
     }
 
-    // --- PROSES LOGIN (POST) ---
-    public function loginPost(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+    public function loginPost(Request $request) {
+        $credentials = $request->validate(['email' => 'required|email', 'password' => 'required']);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-
-            // [LOGIKA PENTING] Cek Status lagi setelah berhasil login
-            if ($user->status === 'verify') {
-                return redirect()->route('otp.verification');
-            }
-
-            // Redirect sesuai Role (Gunakan route name agar konsisten)
-            switch ($user->role) {
-                case 'super_admin':
-                    return redirect()->route('superadmin.dashboard');
-                case 'admin':
-                    return redirect()->route('admin.dashboard');
-                case 'student':
-                    return redirect()->route('user.dashboard');
-                case 'school_admin':
-                    return redirect()->route('school_admin.dashboard');
-                default:
-                    return redirect('/');
-            }
+            if ($user->status === 'verify') return redirect()->route('otp.verification');
+            
+            // Redirect sesuai role
+            if ($user->role === 'super_admin') return redirect()->route('superadmin.dashboard');
+            if ($user->role === 'student') return redirect()->route('user.dashboard');
+            if ($user->role === 'admin') return redirect()->route('admin.dashboard');
+            if ($user->role === 'school_admin') return redirect()->route('school_admin.dashboard');
+            return redirect('/');
         }
-
-        // Jika login gagal
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->onlyInput('email');
+        return back()->withErrors(['email' => 'Email atau password salah.']);
     }
 
-    // --- REGISTER PAGE (GET) ---
-    public function register()
-    {
+    public function register() {
         return view('Auth.register');
     }
 
-    // --- PROSES REGISTER (POST) ---
-   public function registerPost(Request $request)
-{
-    // 1. Validasi Input Lengkap
-    $request->validate([
-        'username'      => 'required|unique:users',
-        'email'         => 'required|email|unique:users',
-        'password'      => 'required|min:6|confirmed', // confirmed utk cek password_confirmation
-    ]);
-
-    // 2. Buat User (Masukkan semua field dari form)
-    $user = User::create([
-        'username' => $request->username,
-        'email'    => $request->email,
-        'password' => Hash::make($request->password),
-        'role'     => 'student',
-        'status'   => 'verify', // Status awal verify agar kena middleware OTP
-        'current_level'   => 0, // Default levelx
-    ]);
-
-    // 3. Panggil Fungsi Kirim OTP (Sama seperti sebelumnya)
-    $this->sendOtp($user);
-
-    // 4. Login Otomatis
-    Auth::login($user);
-
-    // 5. Redirect ke halaman Input OTP
-    return redirect()->route('otp.verification');
-}
-    // --- FUNGSI KIRIM OTP (HELPER) ---
-    public function sendOtp($user)
-    {
-        $otpCode = rand(100000, 999999);
-
-        Otp::where('user_id', $user->id)->delete();
-
-        Otp::create([
-            'user_id' => $user->id,
-            'otp_code' => $otpCode,
-            'expires_at' => Carbon::now()->addMinutes(5)
+    public function registerPost(Request $request) {
+        $request->validate([
+            'username' => 'required|unique:users',
+            'email'    => 'required|email|unique:users',
+            'password' => 'required|min:6|confirmed',
         ]);
-
-        try {
-            Mail::to($user->email)->send(new OtpMail($user, $otpCode));
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-        }
+        $user = User::create([
+            'username' => $request->username,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role'     => 'student',
+            'status'   => 'verify',
+            'current_level' => 0
+        ]);
+        $this->sendOtp($user);
+        Auth::login($user);
+        return redirect()->route('otp.verification');
     }
 
-    // --- LOGOUT ---
-    public function logout(Request $request)
-    {
+    public function logout(Request $request) {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login')->with('success', 'Anda berhasil logout.');
     }
 
-    // 1. Tampilkan Halaman Ganti Password
-    public function changePasswordView()
+    // ==========================================
+    //      FITUR LUPA PASSWORD (GUEST FLOW)
+    // ==========================================
+
+    // 1. Tampilkan Halaman Input Email
+    public function showForgotPasswordForm()
     {
+        return view('Auth.forgot-password');
+    }
+
+    // 2. Proses Kirim OTP (Guest)
+    public function sendForgotPasswordOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.exists' => 'Email tidak ditemukan dalam sistem kami.'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Simpan email di Session karena user belum login
+        Session::put('reset_email', $user->email);
+        
+        // Kirim OTP
+        $this->sendOtp($user);
+
+        // Redirect ke halaman OTP khusus Reset Password
+        return redirect()->route('password.forgot.otp')->with('success', 'Kode OTP telah dikirim ke email Anda.');
+    }
+
+    // 3. Tampilkan Halaman OTP (Guest)
+   public function showForgotOtpView()
+{
+    // Cek apakah session email ada? Jika tidak, tendang balik ke input email
+    if (!Session::has('reset_email')) {
+        return redirect()->route('password.forgot')->with('error', 'Sesi habis, silakan masukkan email kembali.');
+    }
+
+    return view('Auth.otp', [
+        'title'     => 'Reset Password',
+        'message'   => 'Masukkan kode OTP untuk mereset password Anda.',
+        'actionUrl' => route('password.forgot.verify')
+    ]);
+}
+
+    // 4. Verifikasi OTP (Guest)
+    public function verifyForgotOtp(Request $request)
+    {
+        if (!Session::has('reset_email')) return redirect()->route('password.forgot');
+
+        $request->validate(['otp_code' => 'required|numeric']);
+        
+        $email = Session::get('reset_email');
+        $user = User::where('email', $email)->first();
+        $otpRecord = Otp::where('user_id', $user->id)->where('otp_code', $request->otp_code)->first();
+
+        if (!$otpRecord) return back()->with('error', 'Kode OTP salah!');
+        if (Carbon::now()->gt($otpRecord->expires_at)) return back()->with('error', 'Kode OTP kadaluarsa!');
+
+        // OTP Valid! Hapus OTP dan beri "Tiket" akses halaman reset
+        $otpRecord->delete();
+        Session::put('allow_reset_password', true); 
+
+        return redirect()->route('password.reset.form');
+    }
+
+    // 5. Tampilkan Form Reset Password (Guest)
+    public function showResetPasswordForm()
+    {
+        if (!Session::has('allow_reset_password')) return redirect()->route('password.forgot');
+
+        // Reuse view change-password dengan actionUrl reset
+        return view('Auth.change-password', [
+            'actionUrl' => route('password.reset.update')
+        ]);
+    }
+
+    // 6. Update Password Baru ke DB (Guest)
+    public function updateResetPassword(Request $request)
+    {
+        if (!Session::has('allow_reset_password')) return redirect()->route('login');
+
+        $request->validate(['password' => 'required|min:6|confirmed']);
+
+        $email = Session::get('reset_email');
+        $user = User::where('email', $email)->first();
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        Session::forget(['reset_email', 'allow_reset_password']);
+
+        return redirect()->route('login')->with('success', 'Password berhasil direset! Silakan login.');
+    }
+
+
+    // ==========================================
+    //      LOGIKA GANTI PASSWORD (AUTH USER)
+    // ==========================================
+
+    public function changePasswordView() {
         return view('Auth.change-password');
     }
 
-    // 2. Kirim OTP untuk Ganti Password
-    public function sendChangePasswordOtp()
-    {
+    public function requestChangePassword(Request $request) {
+        $request->validate(['password' => 'required|min:6|confirmed']);
         $user = Auth::user();
-
-        // Panggil fungsi sendOtp yang sudah kita buat sebelumnya
+        
+        Session::put('temp_new_password', Hash::make($request->password));
         $this->sendOtp($user);
 
-        // Beri tanda di session bahwa user sudah minta OTP
-        // Tanda ini dipakai di View untuk memunculkan form input password
-        Session::flash('otp_sent', true);
-        Session::flash('success', 'Kode OTP telah dikirim ke email Anda.');
+        return redirect()->route('password.change.otp');
+    }
 
+    public function showChangePasswordOtpView() {
+        if (!Session::has('temp_new_password')) return redirect()->route('password.change');
+        
+        return view('Auth.otp', [
+            'actionUrl' => route('password.verify'),
+            'title' => 'Konfirmasi Ganti Password',
+            'message' => 'Demi keamanan, masukkan kode OTP untuk konfirmasi.'
+        ]);
+    }
+
+    public function verifyAndChangePassword(Request $request) {
+        if (!Session::has('temp_new_password')) return redirect()->route('password.change');
+        $request->validate(['otp_code' => 'required|numeric']);
+
+        $user = Auth::user();
+        $otpRecord = Otp::where('user_id', $user->id)->where('otp_code', $request->otp_code)->first();
+
+        if (!$otpRecord) return back()->with('error', 'Kode OTP salah!');
+        if (Carbon::now()->gt($otpRecord->expires_at)) return back()->with('error', 'Kode OTP kadaluarsa!');
+
+        $userUpdate = User::find($user->id);
+        $userUpdate->password = Session::get('temp_new_password');
+        $userUpdate->save();
+
+        $otpRecord->delete();
+        Session::forget('temp_new_password');
+
+        return redirect()->route('password.change')->with('success', 'Password berhasil diperbarui!');
+    }
+    
+    public function cancelChangePassword() {
+        Session::forget(['temp_new_password']);
         return redirect()->route('password.change');
     }
 
-    // 3. Proses Update Password
-    public function updatePassword(Request $request)
-    {
-        // Validasi Input
-        $request->validate([
-            'otp_code' => 'required|numeric',
-            'password' => 'required|min:6|confirmed', // Password baru & Konfirmasi
-        ]);
-
-        $user = Auth::user();
-
-        // Cek OTP di Database
-        $otpRecord = Otp::where('user_id', $user->id)
-                        ->where('otp_code', $request->otp_code)
-                        ->first();
-
-        // Validasi OTP
-        if (!$otpRecord) {
-            Session::flash('otp_sent', true); // Biar form tidak hilang
-            return back()->with('error', 'Kode OTP salah!');
-        }
-        if (Carbon::now()->gt($otpRecord->expires_at)) {
-            Session::flash('otp_sent', true);
-            return back()->with('error', 'Kode OTP kadaluarsa!');
-        }
-
-        // JIKA SUKSES:
-        // 1. Update Password User
-        $userUpdate = User::find($user->id);
-        $userUpdate->password = Hash::make($request->password);
-        $userUpdate->save();
-
-        // 2. Hapus OTP
-        $otpRecord->delete();
-
-        // 3. Kembali dengan pesan sukses
-        return redirect()->route('password.change')->with('success', 'Password berhasil diubah!');
+    // HELPER OTP
+    public function sendOtp($user) {
+        $otpCode = rand(100000, 999999);
+        Otp::where('user_id', $user->id)->delete();
+        Otp::create(['user_id' => $user->id, 'otp_code' => $otpCode, 'expires_at' => Carbon::now()->addMinutes(5)]);
+        try { Mail::to($user->email)->send(new OtpMail($user, $otpCode)); } catch (\Exception $e) { Log::error($e->getMessage()); }
     }
 }
-
