@@ -95,4 +95,19 @@ class UserController extends Controller
             'data' => $student
         ], 200);
     }
+
+    public function learning($slug)
+  {
+    $course = Course::where('slug', $slug)->firstOrFail();
+
+    // CEK KEAMANAN: Apakah user sudah beli?
+    // Jika harga > 0 DAN user belum beli, tendang balik
+    if ($course->price > 0 && !auth()->user()->hasPurchased($course->id)) {
+        return redirect()->route('user.courses.show', $course->slug)
+            ->with('error', 'Silakan beli kursus ini terlebih dahulu.');
+    }
+
+    // ... logika ambil materi/modul ...
+    return view('user.courses.learning', compact('course'));
+  }
 }

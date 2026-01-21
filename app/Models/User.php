@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\School;
-
+use App\Models\Order;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -66,5 +66,20 @@ class User extends Authenticatable
     {
 
         return $this->belongsTo(School::class, 'school_id','id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    // 2. Fungsi Cek Status Pembelian
+    public function hasPurchased($courseId)
+    {
+        // Cek apakah ada order untuk course_id ini dengan status 'settlement'
+        return $this->orders()
+                    ->where('course_id', $courseId)
+                    ->where('payment_status', 'settlement')
+                    ->exists();
     }
 }

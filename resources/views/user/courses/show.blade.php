@@ -62,10 +62,18 @@
         border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px;
         transition: all 0.3s; display: block; width: 100%;
         box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3);
+        cursor: pointer;
     }
     .btn-primary-custom:hover { 
         transform: translateY(-2px); 
         box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.4); color: white; 
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+    }
+    .btn-primary-custom:disabled {
+        background: #cbd5e1;
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
     }
 
     .accordion-item { border: 1px solid #f1f5f9; margin-bottom: 10px; border-radius: 12px !important; overflow: hidden; }
@@ -84,7 +92,7 @@
     .tab-btn { border-radius: 50px; padding: 8px 24px; font-weight: 600; }
 </style>
 
-{{-- LOGIKA HITUNG DATA (Aman dari error null) --}}
+{{-- LOGIKA HITUNG DATA --}}
 @php
     $totalContent = 0;
     if($course->modules) {
@@ -121,13 +129,12 @@
 {{-- B. MAIN CONTENT --}}
 <div class="container main-content pb-5 mt-2">
     
-    {{-- 'align-items-start' ADALAH KUNCI AGAR SIDEBAR BISA STICKY --}}
     <div class="row align-items-start">
         
         {{-- 1. KOLOM KIRI (Konten Utama) --}}
         <div class="col-lg-8 mb-5">
             
-            {{-- Tab Menu (Terpisah) --}}
+            {{-- Tab Menu --}}
             <div class="d-flex gap-2 mb-4 mt-3">
                 <button class="btn btn-dark shadow-sm tab-btn">Tentang Kursus</button>
                 <button class="btn btn-white border text-muted bg-white hover-bg-light tab-btn">Ulasan</button>
@@ -188,7 +195,7 @@
 
         {{-- 2. KOLOM KANAN (Sidebar Pembayaran) --}}
         <div class="col-lg-4 mt-5">
-            <div class="sidebar-sticky"> {{-- Wrapper Sticky --}}
+            <div class="sidebar-sticky"> 
                 
                 <div class="card-clean p-4">
                     
@@ -213,12 +220,47 @@
                         @endif
                     </div>
                     
-                    {{-- Tombol --}}
-                    <div class="d-grid gap-2 mb-4">
-                        <a href="{{ route('user.courses.learning', ['slug' => $course->id]) }}" class="btn-primary-custom text-center text-decoration-none">
-                            Mulai Belajar Sekarang <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
+                    {{-- TOMBOL ACTION & PAYMENT LOGIC --}}
+<div class="d-grid gap-2 mb-4">
+    @auth
+        {{-- LOGIKA UTAMA: Cek Pembelian --}}
+        @if(auth()->user()->hasPurchased($course->id))
+            
+            {{-- JIKA SUDAH BELI: Tampilkan Tombol Lanjut Belajar --}}
+            <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn btn-success btn-lg btn-block w-100 shadow-sm font-weight-bold" style="border-radius: 12px;">
+                <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
+            </a>
+
+        @else
+            {{-- JIKA BELUM BELI --}}
+            
+            @if($course->price > 0)
+                {{-- Tombol Beli --}}
+                <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
+                    Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
+                </button>
+            @else
+                {{-- Tombol Gratis --}}
+                <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
+                    Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            @endif
+
+            {{-- Indikator Loading --}}
+            <div id="loading-payment" class="text-center mt-2" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="text-muted small mt-1">Memproses pembayaran...</p>
+            </div>
+        @endif
+
+    @else
+        <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
+            Login untuk Membeli <i class="fas fa-lock ms-2"></i>
+        </a>
+    @endauth
+</div>
 
                     {{-- Fitur --}}
                     <div class="bg-light p-3 rounded-3">
@@ -237,3 +279,91 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.clientKey') }}"></script>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const payButton = document.getElementById('pay-button');
+            const loadingIndicator = document.getElementById('loading-payment');
+
+            // Cek apakah tombol ada (hanya muncul jika user login & kursus berbayar)
+            if (payButton) {
+                payButton.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    // --- STATE: LOADING ---
+                    payButton.disabled = true;
+                    payButton.innerHTML = 'Memuat...';
+                    loadingIndicator.style.display = 'block';
+
+                    try {
+                        // --- STEP 1: Minta Token ke Controller ---
+                        const response = await fetch("{{ route('user.payment.process') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({
+                                course_id: "{{ $course->id }}",
+                                price: "{{ $course->price }}"
+                            })
+                        });
+
+                        // Cek jika controller error (bukan JSON)
+                        if (!response.ok) {
+                            throw new Error('Terjadi kesalahan pada server.');
+                        }
+
+                        const data = await response.json();
+
+                        // --- STATE: SELESAI LOADING ---
+                        loadingIndicator.style.display = 'none';
+                        payButton.disabled = false;
+                        payButton.innerHTML = 'Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>';
+
+                        // --- STEP 2: Handle Respon Controller ---
+                        if (data.status === 'success' || data.status === 'pending') {
+                            
+                            // Munculkan Popup Midtrans
+                            window.snap.pay(data.snap_token, {
+                                onSuccess: function(result) {
+                                    // Redirect ke halaman sukses dengan parameter
+                                    window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement";
+                                },
+                                onPending: function(result) {
+                                    Swal.fire('Menunggu Pembayaran', 'Silakan selesaikan pembayaran Anda.', 'info');
+                                },
+                                onError: function(result) {
+                                    Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
+                                },
+                                onClose: function() {
+                                    Swal.fire('Dibatalkan', 'Anda menutup popup pembayaran.', 'warning');
+                                }
+                            });
+
+                        } else if (data.status === 'free') {
+                            // Jika kursus gratis (ditangani controller), langsung redirect
+                            window.location.href = data.redirect_url;
+                        } else {
+                            // Error dari controller (misal: voucher salah, dll)
+                            Swal.fire('Gagal', data.message || 'Gagal memproses.', 'error');
+                        }
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        loadingIndicator.style.display = 'none';
+                        payButton.disabled = false;
+                        payButton.innerHTML = 'Coba Lagi';
+                        Swal.fire('Oops...', error.message, 'error');
+                    }
+                });
+            }
+        });
+    </script>
+@endpush

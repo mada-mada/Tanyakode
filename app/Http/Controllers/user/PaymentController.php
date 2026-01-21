@@ -11,127 +11,66 @@ use App\Models\Order;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Midtrans\Config; // Tetap butuh Config untuk Server Key
-
-// --- PENTING: LIBRARY HTTP UNTUK MANUAL REQUEST ---
 use Illuminate\Support\Facades\Http; 
-// -------------------------------------------------
+use Illuminate\Support\Facades\Log; // Tambahan untuk cek error di storage/logs
 
 class PaymentController extends Controller
 {
-    public function __construct()
-    {
-        // Setup Config Dasar
-        Config::$serverKey = config('services.midtrans.serverKey');
-        Config::$isProduction = config('services.midtrans.isProduction');
-        
-        // Matikan Sanitizer (Penyebab error Array Key 10023)
-        Config::$isSanitized = false; 
-        Config::$is3ds = false;
-    }
+    // HAPUS function __construct() karena kita pakai HTTP Client manual
+    // agar tidak error jika library midtrans belum terinstall via composer
 
-    public function index()
-    {
-        $courses = Course::all();
-        return view('user.courses.index', compact('courses'));
-    }
-
-    // --- FUNGSI SHOW (YANG TADI HILANG) ---
     public function show($slug)
     {
         $course = Course::where('slug', $slug)->firstOrFail();
-
-        // Ambil riwayat order user
-        $orders = Order::where('user_id', Auth::id())
-                    ->where('course_id', $course->id)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-        // Cek apakah ada transaksi pending
-        $pendingTransaction = Order::where('user_id', Auth::id())
-                                ->where('course_id', $course->id)
-                                ->where('payment_status', 'pending')
-                                ->first();
-
-        // Jika ada pending, ambil token lamanya
-        $snapToken = $pendingTransaction ? $pendingTransaction->snap_token : null;
-
-        return view('user.courses.show', compact('course', 'snapToken', 'pendingTransaction', 'orders'));
+        return view('user.courses.show', compact('course'));
     }
 
-    public function checkVoucher(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|string',
-            'course_id' => 'required|exists:courses,id'
-        ]);
-
-        $user = auth()->user();
-        $course = Course::find($request->course_id);
-
-        $voucher = Voucher::where('code', $request->code)
-                    ->where('user_id', $user->id)
-                    ->where('is_active', true)
-                    ->first();
-
-        if (!$voucher) {
-            return response()->json(['status' => 'error', 'message' => 'Voucher tidak valid.'], 404);
-        }
-
-        $discount = $voucher->amount;
-        $finalPrice = max($course->price - $discount, 0);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Voucher valid!',
-            'data' => [
-                'original_price' => $course->price,
-                'discount' => $discount,
-                'final_price' => $finalPrice,
-                'voucher_id' => $voucher->id 
-            ]
-        ]);
-    }
-
-    // --- FUNGSI PROCESS PAYMENT (FIXED MANUAL REQUEST) ---
     public function processPayment(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
             'course_id' => 'required|exists:courses,id',
             'voucher_id' => 'nullable|exists:vouchers,id'
         ]);
 
-        $user = Auth::user();
-        $course = Course::find($request->course_id);
-        
-        $existing = Order::where('user_id', $user->id)
-                    ->where('course_id', $course->id)
-                    ->where('payment_status', 'pending')
-                    ->first();
-        
-        if($existing) {
-            return redirect()->route('user.courses.show', $course->slug)->with('error', 'Selesaikan pembayaran sebelumnya.');
-        }
-
-        $finalAmount = (int) $course->price;
-        $voucherUsed = null;
-
-        if ($request->filled('voucher_id')) {
-            $voucher = Voucher::where('id', $request->voucher_id)
-                        ->where('user_id', $user->id)
-                        ->where('is_active', true)
-                        ->first();
-            if ($voucher) {
-                $finalAmount = max((int)$course->price - (int)$voucher->amount, 0);
-                $voucherUsed = $voucher;
-            }
-        }
-
-        DB::beginTransaction();
         try {
+            $user = Auth::user();
+            $course = Course::find($request->course_id);
+            
+            // 2. Cek Transaksi Pending (Return Token Lama jika ada)
+            $existing = Order::where('user_id', $user->id)
+                        ->where('course_id', $course->id)
+                        ->where('payment_status', 'pending')
+                        ->first();
+            
+            if($existing && $existing->snap_token) {
+                return response()->json([
+                    'status' => 'pending',
+                    'snap_token' => $existing->snap_token,
+                    'order_id' => $existing->reference_id
+                ]);
+            }
+
+            // 3. Hitung Harga
+            $finalAmount = (int) $course->price;
+            $voucherUsed = null;
+
+            if ($request->filled('voucher_id')) {
+                $voucher = Voucher::where('id', $request->voucher_id)
+                            ->where('user_id', $user->id)
+                            ->where('is_active', true)
+                            ->first();
+                if ($voucher) {
+                    $finalAmount = max((int)$course->price - (int)$voucher->amount, 0);
+                    $voucherUsed = $voucher;
+                }
+            }
+
+            // 4. Mulai Transaksi Database
+            DB::beginTransaction();
+
             $orderId = 'INV-' . time() . '-' . Str::random(5);
 
-            // 1. Simpan ke Database
             $transaction = Order::create([
                 'user_id' => $user->id,
                 'course_id' => $course->id,
@@ -145,90 +84,106 @@ class PaymentController extends Controller
                 $voucherUsed->update(['is_active' => false]);
             }
 
+            // 5. Request Token ke Midtrans (Jika berbayar)
             if ($finalAmount > 0) {
                 
-                // --- KODE MANUAL (BYPASS SDK) ---
+                // Ambil Config (Pastikan sesuai services.php Anda)
                 $serverKey = config('services.midtrans.serverKey');
                 $isProduction = config('services.midtrans.isProduction');
+
+                // DEBUG: Cek apakah Server Key terbaca
+                if(empty($serverKey)) {
+                    throw new \Exception("Server Key Midtrans belum diatur di .env atau config.");
+                }
 
                 $url = $isProduction 
                     ? 'https://app.midtrans.com/snap/v1/transactions' 
                     : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
-                $response = Http::withBasicAuth($serverKey, '')
-                    ->withHeaders([
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ])
-                    ->withOptions(['verify' => false]) // Bypass SSL Localhost
-                    ->post($url, [
-                        'transaction_details' => [
-                            'order_id' => $orderId,
-                            'gross_amount' => $finalAmount
-                        ],
-                        'customer_details' => [
-                            'first_name' => $user->name,
-                            'email' => $user->email,
-                        ]
-                    ]);
+                // Encode Server Key ke Base64 untuk Basic Auth
+                $authString = base64_encode($serverKey . ':');
 
+                // Kirim Request
+                $response = Http::withHeaders([
+                    'Authorization' => 'Basic ' . $authString,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])
+                ->withOptions(['verify' => false]) // Bypass SSL di Localhost (Penting!)
+                ->post($url, [
+                    'transaction_details' => [
+                        'order_id' => $orderId,
+                        'gross_amount' => $finalAmount
+                    ],
+                    'customer_details' => [
+                        'first_name' => $user->name,
+                        'email' => $user->email,
+                    ],
+                    'item_details' => [
+                        [
+                            'id' => $course->id,
+                            'price' => $finalAmount,
+                            'quantity' => 1,
+                            'name' => substr($course->title, 0, 50) // Midtrans max name length 50
+                        ]
+                    ]
+                ]);
+
+                // Cek Jika Request Gagal
                 if ($response->failed()) {
-                    throw new \Exception("Gagal koneksi ke Midtrans: " . $response->body());
+                    Log::error('Midtrans Error:', $response->json()); // Log error ke file
+                    throw new \Exception("Gagal menghubungi Midtrans: " . $response->body());
                 }
 
                 $jsonBody = $response->json();
                 $snapToken = $jsonBody['token'] ?? null;
                 
                 if (!$snapToken) {
-                     throw new \Exception("Token tidak ditemukan. Response: " . $response->body());
+                     throw new \Exception("Token tidak ditemukan dalam respon Midtrans.");
                 }
 
+                // Update Token ke Database
                 $transaction->update(['snap_token' => $snapToken]);
-                // ---------------------------------
+                
+                DB::commit();
+
+                return response()->json([
+                    'status' => 'success',
+                    'snap_token' => $snapToken,
+                    'order_id' => $orderId
+                ]);
 
             } else {
+                // Jika Gratis
                 DB::commit();
-                return redirect()->route('user.payment.success', ['order_id' => $orderId, 'transaction_status' => 'settlement']);
+                return response()->json([
+                    'status' => 'free',
+                    'redirect_url' => route('user.payment.success', ['order_id' => $orderId, 'transaction_status' => 'settlement'])
+                ]);
             }
-
-            DB::commit();
-            return redirect()->route('user.courses.show', $course->slug);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            dd("ERROR PAYMENT: " . $e->getMessage());
+            // Catat error sebenarnya di storage/logs/laravel.log
+            Log::error('PAYMENT ERROR: ' . $e->getMessage()); 
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+            ], 500);
         }
     }
-
-    public function retry($id)
-    {
-        $oldTransaction = Order::findOrFail($id);
-        $course = $oldTransaction->course; 
-        $oldTransaction->update(['payment_status' => 'cancelled']);
-        return redirect()->route('user.courses.show', $course->slug)->with('info', 'Buat pesanan baru.');
-    }
-
+    
+    // Function Success (Halaman Redirect)
     public function success(Request $request)
     {
-        $orderId = $request->query('order_id');
-        $transactionStatus = $request->query('transaction_status');
-
-        if ($orderId) {
-            $trx = Order::where('reference_id', $orderId)->first();
-            if ($trx && in_array($transactionStatus, ['settlement', 'capture'])) {
-                $trx->update(['payment_status' => 'settlement']);
+        // Logika update status database sederhana
+        if ($request->has('order_id')) {
+            $order = Order::where('reference_id', $request->order_id)->first();
+            if($order) {
+                $order->update(['payment_status' => 'settlement']);
             }
         }
-        return view('user.payment.success', ['order_id' => $orderId, 'status' => $transactionStatus]);
-    }
-
-    public function failed(Request $request)
-    {
-        $orderId = $request->query('order_id');
-        $transaction = Order::where('reference_id', $orderId)->first();
-        if ($transaction) {
-            $transaction->update(['payment_status' => 'failed']);
-        }
-        return redirect()->route('user.courses.index')->with('error', 'Pembayaran Gagal.');
+        return view('user.courses.learning');
     }
 }
