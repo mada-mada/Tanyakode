@@ -432,7 +432,7 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a href="#">
+                <a href="{{ route('user.spin') }}">
                     <i class="fa-solid fa-rotate"></i>
                     <span>Spin Wheel</span>
                 </a>

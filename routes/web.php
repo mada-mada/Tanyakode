@@ -11,6 +11,7 @@ use App\Http\Controllers\superadmin\Superadmincontroller;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
 use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
 use App\Http\Controllers\User\PaymentController;
+use App\Http\Controllers\User\SpinGameController; // Pastikan ini terimport
 
 // Import Controller CRUD Admin/School Admin
 use App\Http\Controllers\Admin\CourseController;
@@ -36,7 +37,7 @@ Route::middleware(['auth'])->group(function() {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // OTP & Security (Tidak butuh CekUserIsActive dulu, karena mungkin user login untuk verifikasi OTP)
+    // OTP & Security
     Route::get('/verify-otp', [OtpController::class, 'index'])->name('otp.verification');
     Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.check');
     Route::post('/resend-otp', [OtpController::class, 'resend'])->name('otp.resend');
@@ -45,6 +46,7 @@ Route::middleware(['auth'])->group(function() {
     Route::post('/change-password/send', [AuthController::class, 'sendChangePasswordOtp'])->name('password.sendOtp');
     Route::post('/change-password/update', [AuthController::class, 'updatePassword'])->name('password.update');
 
+    // Middleware Cek User Active
     Route::middleware([CekUserIsActive::class])->group(function () {
 
         // --- SUPER ADMIN ---
@@ -74,7 +76,14 @@ Route::middleware(['auth'])->group(function() {
                 Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');
                 Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
+                Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
             });
+
+        // --- GAME SPIN WHEEL ---
+        Route::middleware(['role:user'])->group(function () {
+            Route::get('/spin-wheel', [SpinGameController::class, 'index'])->name('user.spin');
+            Route::post('/spin-wheel-process', [SpinGameController::class, 'spinProcess'])->name('user.spin.process');
+        });
 
         // --- ADMIN BIASA ---
         Route::middleware(['role:admin'])
@@ -90,25 +99,24 @@ Route::middleware(['auth'])->group(function() {
                 Route::get('/dashboard-sekolah', function () { return 'Halaman admin sekolah'; })->name('dashboard');
             });
 
+        // --- SHARED RESOURCE (Admin & School Admin) ---
         Route::middleware(['role:admin,school_admin'])->group(function () {
-
             // 1. Course Resource
             Route::resource('courses', CourseController::class);
 
-            // 2. Module Routes (Nested dalam Course)
+            // 2. Module Routes
             Route::post('courses/{course}/modules', [ModuleController::class, 'store'])->name('modules.store');
             Route::get('modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
             Route::put('modules/{module}', [ModuleController::class, 'update'])->name('modules.update');
             Route::delete('modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy');
 
-            // 3. Module Content Routes (Nested dalam Module)
+            // 3. Module Content Routes
             Route::post('modules/{module}/contents', [ModuleContentController::class, 'store'])->name('contents.store');
             Route::get('contents/{content}/edit', [ModuleContentController::class, 'edit'])->name('contents.edit');
             Route::put('contents/{content}', [ModuleContentController::class, 'update'])->name('contents.update');
             Route::delete('contents/{content}', [ModuleContentController::class, 'destroy'])->name('contents.destroy');
         });
 
-    });
+    }); // End CekUserIsActive
 
-
-});
+}); // End Auth Group
