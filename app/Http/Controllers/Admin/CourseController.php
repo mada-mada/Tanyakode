@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage; // TAMBAHAN PENTING: Untuk akses hapus file
 
 class CourseController extends Controller
 {
@@ -41,6 +42,8 @@ class CourseController extends Controller
             'price' => 'required_if:level,menengah,expert|nullable|numeric|min:0',
             'has_merchandise_reward' => 'required|boolean',
             'merchandise_name' => 'required_if:has_merchandise_reward,1|nullable|string',
+            // Validasi gambar saat Create
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
         ]);
 
         if ($validated['level'] === 'pemula') {
@@ -51,9 +54,14 @@ class CourseController extends Controller
         }
 
         $validated['slug'] = Str::slug($validated['title']);
-
         $validated['school_id'] = $user->school_id;
         $validated['created_by'] = $user->id;
+
+        // --- UPLOAD GAMBAR BARU ---
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('thumbnails', 'public');
+            $validated['thumbnail_url'] = $path;
+        }
 
         Course::create($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil dibuat.');
@@ -61,7 +69,6 @@ class CourseController extends Controller
 
     public function show(Course $course)
     {
-        // Load modules dan contents untuk ditampilkan di detail
         $course->load(['modules.contents']);
         return view('admin.courses.show', compact('course'));
     }
@@ -75,6 +82,7 @@ class CourseController extends Controller
         return view('admin.courses.edit', compact('course'));
     }
 
+    // --- BAGIAN UPDATE YANG DIMODIFIKASI ---
     public function update(Request $request, Course $course)
     {
         /** @var User $user */
@@ -87,6 +95,8 @@ class CourseController extends Controller
             'price' => 'required_if:level,menengah,expert|nullable|numeric|min:0',
             'has_merchandise_reward' => 'required|boolean',
             'merchandise_name' => 'required_if:has_merchandise_reward,1|nullable|string',
+            // Validasi gambar saat Edit (Nullable artinya user tidak wajib upload gambar baru)
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validated['level'] === 'pemula') {
@@ -98,29 +108,45 @@ class CourseController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
 
+        // --- LOGIKA GANTI GAMBAR ---
+        if ($request->hasFile('thumbnail')) {
+            // 1. Hapus gambar lama jika ada
+            if ($course->thumbnail_url && Storage::disk('public')->exists($course->thumbnail_url)) {
+                Storage::disk('public')->delete($course->thumbnail_url);
+            }
+
+            // 2. Upload gambar baru
+            $path = $request->file('thumbnail')->store('thumbnails', 'public');
+            
+            // 3. Masukkan path baru ke array validated untuk di-update
+            $validated['thumbnail_url'] = $path;
+        }
 
         $course->update($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil diperbarui.');
     }
 
+    // --- BAGIAN DESTROY YANG DIMODIFIKASI ---
     public function destroy(Course $course)
     {
         /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
+        // --- LOGIKA HAPUS GAMBAR ---
+        // Cek apakah kursus ini punya gambar, jika ya, hapus dari folder storage
+        if ($course->thumbnail_url && Storage::disk('public')->exists($course->thumbnail_url)) {
+            Storage::disk('public')->delete($course->thumbnail_url);
+        }
+
         $course->delete();
         return redirect()->route('courses.index')->with('success', 'Kursus dihapus.');
     }
 
-    /**
-     * Menampilkan Halaman Dashboard Admin.
-     */
     public function dashboard()
     {
         $user = Auth::user();
 
-        // Hitung kursus berdasarkan role
         $courseQuery = Course::query();
 
         if ($user->role === 'school_admin') {
@@ -131,8 +157,6 @@ class CourseController extends Controller
 
         $totalCourses = $courseQuery->count();
 
-        // Kirim data ke view dashboard yang baru kita buat
         return view('admin.dashboard', compact('totalCourses'));
     }
 }
-

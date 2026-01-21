@@ -8,12 +8,27 @@
         <div class="card-header">
             <h3 class="card-title">Edit Kursus: {{ $course->title }}</h3>
         </div>
-        <form action="{{ route('courses.update', $course->id) }}" method="POST">
+        <form action="{{ route('courses.update', $course->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('PUT') <div class="card-body">
+            @method('PUT') 
+            <div class="card-body">
                 <div class="form-group">
                     <label>Judul Kursus</label>
                     <input type="text" name="title" class="form-control" value="{{ $course->title }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Thumbnail Kursus</label>
+                    <div class="mb-2">
+                        @if($course->thumbnail_url)
+                            <img src="{{ asset('storage/' . $course->thumbnail_url) }}" alt="Thumbnail Lama" class="img-thumbnail" style="max-height: 150px;">
+                            <p class="text-muted text-sm mt-1"><i>Gambar saat ini. Biarkan kosong jika tidak ingin mengubah.</i></p>
+                        @else
+                            <p class="text-muted text-sm"><i>Belum ada thumbnail.</i></p>
+                        @endif
+                    </div>
+                    <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                    <small class="text-muted">Format: jpg, jpeg, png. Maks: 2MB.</small>
                 </div>
 
                 <div class="form-group">
@@ -71,4 +86,4 @@
     });
 </script>
 @stop
-@stop
+@endsection

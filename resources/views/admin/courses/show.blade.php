@@ -4,12 +4,38 @@
 
 @section('content')
 <div class="container-fluid pt-3">
-    <div class="callout callout-info">
-        <h5><i class="fas fa-info"></i> {{ $course->title }}</h5>
-        Level: <b>{{ ucfirst($course->level) }}</b> | Harga: <b>{{ number_format($course->price) }}</b>
-        <button class="btn btn-primary btn-sm float-right" data-toggle="modal" data-target="#modalAddModule">
-            <i class="fas fa-plus"></i> Tambah Bab Baru
-        </button>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2">
+                    @if($course->thumbnail_url)
+                        <img src="{{ asset('storage/' . $course->thumbnail_url) }}" alt="Course Thumbnail" class="img-fluid rounded border">
+                    @else
+                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height: 100px; width: 100%;">
+                            <span>No Image</span>
+                        </div>
+                    @endif
+                </div>
+                <div class="col-md-10">
+                    <h3>{{ $course->title }}</h3>
+                    <p class="text-muted mb-2">
+                        <span class="badge badge-{{ $course->level == 'pemula' ? 'success' : ($course->level == 'menengah' ? 'warning' : 'danger') }}">
+                            {{ ucfirst($course->level) }}
+                        </span>
+                        | Harga: <b>{{ number_format($course->price) }}</b>
+                    </p>
+                    <p class="mb-2">Total Modul: <b>{{ $course->modules->count() }}</b></p>
+                    
+                    <button class="btn btn-primary btn-sm mt-2" data-toggle="modal" data-target="#modalAddModule">
+                        <i class="fas fa-plus"></i> Tambah Bab Baru
+                    </button>
+                    <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-outline-warning btn-sm mt-2">
+                        <i class="fas fa-edit"></i> Edit Info Kursus
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     @foreach($course->modules as $module)
@@ -63,8 +89,8 @@
             </table>
 
             <hr>
-           <button type="button"
-                class="btn btn-default btn-sm btn-block btn-add-content"
+           <button type="button" 
+                class="btn btn-default btn-sm btn-block btn-add-content" 
                 data-id="{{ $module->id }}"
                  data-title="{{ $module->title }}">
                  <i class="fas fa-plus-circle"></i> Tambah Materi ke Bab Ini
@@ -173,7 +199,6 @@
 
 <script>
     $(document).ready(function() {
-        // Log ini akan muncul di Console Browser (F12 -> Console) jika script berhasil dimuat
         console.log("Sistem Script CRUD Materi Berhasil Dimuat!");
 
         // 1. Inisialisasi Summernote
@@ -191,15 +216,11 @@
         }
 
         // 3. EVENT LISTENER: Tombol Tambah Materi
-        // Menggunakan $(document).on agar bisa mendeteksi elemen meski di dalam card collapse
         $(document).on('click', '.btn-add-content', function(e) {
-            e.preventDefault(); // Mencegah refresh halaman jika ada href="#"
-
-            // Ambil data dari tombol
+            e.preventDefault(); 
             var moduleId = $(this).data('id');
             var moduleTitle = $(this).data('title');
-
-            console.log("Tombol diklik! Module ID: " + moduleId); // Debugging
+            console.log("Tombol diklik! Module ID: " + moduleId); 
 
             // Reset form
             $('#formContent')[0].reset();
@@ -209,7 +230,6 @@
             $('#contentTypeSelect').val('theory').trigger('change');
 
             // Set URL Action secara dinamis
-            // Route: /modules/{id}/contents
             var url = "{{ route('contents.store', ':id') }}";
             url = url.replace(':id', moduleId);
             $('#formContent').attr('action', url);

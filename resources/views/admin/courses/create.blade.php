@@ -8,12 +8,18 @@
         <div class="card-header">
             <h3 class="card-title">Informasi Kursus</h3>
         </div>
-        <form action="{{ route('courses.store') }}" method="POST">
+        <form action="{{ route('courses.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                 <div class="form-group">
                     <label>Judul Kursus</label>
                     <input type="text" name="title" class="form-control" required placeholder="Contoh: Belajar Laravel Dasar">
+                </div>
+
+                <div class="form-group">
+                    <label>Thumbnail Kursus</label>
+                    <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                    <small class="text-muted">Format: jpg, jpeg, png. Maks: 2MB</small>
                 </div>
 
                 <div class="form-group">
@@ -73,4 +79,4 @@
     });
 </script>
 @stop
-@stop
+@endsection

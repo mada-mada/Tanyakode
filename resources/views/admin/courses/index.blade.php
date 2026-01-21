@@ -20,7 +20,7 @@
         <table class="table table-striped projects">
             <thead>
                 <tr>
-                    <th>Judul Kursus</th>
+                    <th style="width: 10%">Cover</th> <th>Judul Kursus</th>
                     <th>Level</th>
                     <th>Harga</th>
                     <th>Status</th>
@@ -30,6 +30,13 @@
             <tbody>
                 @foreach($courses as $course)
                 <tr>
+                    <td>
+                        @if($course->thumbnail_url)
+                            <img alt="Avatar" class="img-fluid img-thumbnail" src="{{ asset('storage/' . $course->thumbnail_url) }}" style="width: 80px; height: 50px; object-fit: cover;">
+                        @else
+                            <span class="badge badge-secondary">No Image</span>
+                        @endif
+                    </td>
                     <td>
                         <a>{{ $course->title }}</a>
                         <br/>
@@ -55,6 +62,11 @@
                         <a class="btn btn-info btn-sm" href="{{ route('courses.edit', $course->id) }}">
                             <i class="fas fa-pencil-alt"></i>
                         </a>
+                        <form action="{{ route('courses.destroy', $course->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus kursus ini beserta gambarnya?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                        </form>
                     </td>
                 </tr>
                 @endforeach

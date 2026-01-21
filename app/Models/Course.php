@@ -21,6 +21,7 @@ class Course extends Model
         'is_premium',
         'has_merchandise_reward',
         'merchandise_name',
+        'thumbnail_url'
     ];
 
     /**
