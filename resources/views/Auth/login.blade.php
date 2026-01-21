@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-
     <script>
         tailwind.config = {
             theme: {
@@ -76,7 +75,13 @@
                 </div>
             @endif
 
-           <div id="tab-container" class="flex bg-gray-100 p-1 rounded-full mb-8 w-max mx-auto md:mx-0 mt-0 md:mt-0 ">
+            @if (session('status'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 text-sm animate-fade-in">
+                    <i class="fas fa-check-circle mr-1"></i> {{ session('status') }}
+                </div>
+            @endif
+
+            <div id="tab-container" class="flex bg-gray-100 p-1 rounded-full mb-8 w-max mx-auto md:mx-0 mt-0 md:mt-0 ">
                 <button onclick="switchTab('login')" id="tab-login" class="px-6 py-2 rounded-full text-sm font-bold transition-all bg-white text-brand-blue shadow-sm">Masuk</button>
                 <button onclick="switchTab('register')" id="tab-register" class="px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">Daftar</button>
             </div>
@@ -96,13 +101,13 @@
                         </div>
                         @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-
+                    
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-sm font-medium text-gray-700">Password</label>
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-xs text-brand-blue hover:underline">Lupa Password?</a>
-                            @endif
+                            <button type="button" onclick="switchTab('forgot')" class="text-xs text-brand-blue hover:underline focus:outline-none">
+                                Lupa Password?
+                            </button>
                         </div>
                         <div class="relative">
                             <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -174,6 +179,39 @@
                 </div>
             </div>
 
+            <div id="form-forgot" class="hidden animate-fade-in">
+                <div class="flex items-center mb-6">
+                    <button onclick="switchTab('login')" class="text-gray-400 hover:text-brand-blue transition mr-3 focus:outline-none">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </button>
+                    <h2 class="text-2xl font-bold text-gray-900">Reset Password</h2>
+                </div>
+                
+                <p class="text-gray-500 mb-6 text-sm">Masukkan email yang terdaftar. Kami akan mengirimkan link untuk mereset passwordmu.</p>
+
+                <form method="POST" action="{{ route('password.sendOtp') }}" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Terdaftar</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" name="email" value="{{ old('email') }}" placeholder="contoh@email.com" class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('email') border-red-500 @enderror" required>
+                        </div>
+                        @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-sky text-white font-bold py-3 rounded-lg hover:bg-sky-600 transition shadow-lg transform active:scale-95">
+                        Kirim Link Reset
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button onclick="switchTab('login')" class="text-sm text-gray-500 hover:text-brand-blue transition focus:outline-none">
+                        Batal, kembali ke Login
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -181,25 +219,41 @@
         function switchTab(tab) {
             const loginForm = document.getElementById('form-login');
             const registerForm = document.getElementById('form-register');
+            const forgotForm = document.getElementById('form-forgot');
+            
             const btnLogin = document.getElementById('tab-login');
             const btnRegister = document.getElementById('tab-register');
+            const tabContainer = document.getElementById('tab-container');
 
+            // Reset: Sembunyikan semua form
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            forgotForm.classList.add('hidden');
+
+            // Reset: Style tombol tab
+            btnLogin.classList.remove('bg-white', 'text-brand-blue', 'shadow-sm');
+            btnLogin.classList.add('text-gray-500', 'hover:bg-gray-200');
+            btnRegister.classList.remove('bg-white', 'text-brand-blue', 'shadow-sm');
+            btnRegister.classList.add('text-gray-500', 'hover:bg-gray-200');
+            
+            // Logic Tab
             if (tab === 'login') {
                 loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
+                tabContainer.classList.remove('hidden'); // Tampilkan tab
 
                 btnLogin.classList.add('bg-white', 'text-brand-blue', 'shadow-sm');
                 btnLogin.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                btnRegister.classList.remove('bg-white', 'text-brand-blue', 'shadow-sm');
-                btnRegister.classList.add('text-gray-500', 'hover:bg-gray-200');
-            } else {
-                loginForm.classList.add('hidden');
+
+            } else if (tab === 'register') {
                 registerForm.classList.remove('hidden');
+                tabContainer.classList.remove('hidden'); // Tampilkan tab
 
                 btnRegister.classList.add('bg-white', 'text-brand-blue', 'shadow-sm');
                 btnRegister.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                btnLogin.classList.remove('bg-white', 'text-brand-blue', 'shadow-sm');
-                btnLogin.classList.add('text-gray-500', 'hover:bg-gray-200');
+
+            } else if (tab === 'forgot') {
+                forgotForm.classList.remove('hidden');
+                tabContainer.classList.add('hidden'); // Sembunyikan tab Masuk/Daftar supaya bersih
             }
         }
 
@@ -217,11 +271,18 @@
             }
         }
 
-        // LOGIKA TAMBAHAN:
-        // Jika user gagal Register (ada error username/password_confirmation), otomatis pindah ke tab Register saat halaman reload.
         document.addEventListener("DOMContentLoaded", function() {
-            @if($errors->has('username') || $errors->has('password_confirmation') || ($errors->has('email') && old('username')))
+            // Cek Error Laravel untuk menentukan tab aktif saat reload
+            
+            // 1. Jika ada error register, buka tab register
+            @if($errors->has('username') || $errors->has('password_confirmation'))
                 switchTab('register');
+            
+            // 2. Jika ada error login, buka tab login
+            
+            @elseif(session('status'))
+                // Jika sukses kirim email reset, tetap di halaman login (tapi ada notif hijau)
+                switchTab('login');
             @endif
         });
     </script>
