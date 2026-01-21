@@ -71,13 +71,13 @@ Route::middleware(['auth'])->group(function() {
 
                 // Daftar course
                 Route::get('/courses', [\App\Http\Controllers\User\UserCourseController::class, 'index'])->name('courses.index');
-                Route::get('/course/{slug}', [\App\Http\Controllers\User\PaymentController::class, 'show'])->name('courses.show');
+                Route::get('user/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
                 // Halaman sukses bayar
                 Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');
                 Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
                 Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
-                Route::get('/course/{slug}/learning', [App\Http\Controllers\User\UserCourseController::class, 'learning'])->name('courses.learning');
+                Route::get('user/course/{slug}/learning', [UserCourseController::class, 'learning'])->name('courses.learning');
             });
 
         // --- GAME SPIN WHEEL ---

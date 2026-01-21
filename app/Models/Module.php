@@ -22,6 +22,6 @@ class Module extends Model
     public function contents()
     {
         // Otomatis mengurutkan konten saat dipanggil
-        return $this->hasMany(ModuleContent::class)->orderBy('sort_order', 'asc');
+       return $this->hasMany(ModuleContent::class, 'module_id')->orderBy('sort_order', 'asc');
     }
 }

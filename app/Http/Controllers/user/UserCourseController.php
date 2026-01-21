@@ -1,27 +1,38 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\user;
 
 use App\Http\Controllers\Controller;
-use App\Models\Course;
 use Illuminate\Http\Request;
+use App\Models\Course;
 
 class UserCourseController extends Controller
 {
-    
-     public function index()
+    public function index()
     {
         $courses = Course::all();
         return view('user.courses.index', compact('courses'));
     }
-    
+
+    public function show($slug)
+    {
+        // Panggil relasi 'modules.contents' sesuai nama fungsi di Model
+        $course = Course::with(['modules.contents'])->find($slug);
+
+        if (!$course) {
+            $course = Course::with(['modules.contents'])->where('slug', $slug)->firstOrFail();
+        }
+
+        return view('user.courses.show', compact('course'));
+    }
+
     public function learning($slug)
     {
-        // Ambil data course berdasarkan slug
-        $course = Course::where('slug', $slug)->firstOrFail();
-
-        // Anda bisa menambahkan logika untuk mengambil modul/materi di sini
-        // $modules = $course->modules()->with('contents')->get();
+        $course = Course::with(['modules.contents'])->find($slug);
+        
+        if (!$course) {
+            $course = Course::with(['modules.contents'])->where('slug', $slug)->firstOrFail();
+        }
 
         return view('user.courses.learning', compact('course'));
     }
