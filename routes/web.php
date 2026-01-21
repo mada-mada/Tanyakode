@@ -78,6 +78,7 @@ Route::middleware(['auth'])->group(function() {
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
                 Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
                 Route::get('user/course/{slug}/learning', [UserCourseController::class, 'learning'])->name('courses.learning');
+                Route::post('/payment/check-voucher', [App\Http\Controllers\User\PaymentController::class, 'checkVoucher'])->name('payment.check_voucher'); 
             });
 
         // --- GAME SPIN WHEEL ---

@@ -75,13 +75,14 @@ class SpinGameController extends Controller
 
             // Jika hadiahnya Voucher, buatkan Vouchernya
             if ($winningReward->type == 'voucher') {
-                Voucher::create([
-                    'code' => 'SPIN-' . strtoupper(Str::random(5)),
-                    'user_id' => $user->id,
-                    'amount' => $winningReward->voucher_amount,
-                    'is_active' => true,
-                    // Tambahkan field lain sesuai tabel vouchers Anda
+               Voucher::create([
+                     'code' => 'SPIN-' . strtoupper(Str::random(5)),
+                     'user_id' => $user->id,
+                     'discount_amount' => $winningReward->voucher_amount, // SESUAI DB
+                     'valid_until' => now()->addDays(7), // atau sesuai aturan bisnismu
+                     'is_active' => true,
                 ]);
+
             }
 
             DB::commit();

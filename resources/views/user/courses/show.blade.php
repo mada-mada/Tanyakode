@@ -8,12 +8,12 @@
     
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
 
-    /* 1. HERO SECTION (Header Atas) */
+    /* HERO SECTION */
     .hero-section {
         background: radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 90%);
         color: white;
         padding-top: 60px;
-        padding-bottom: 80px; /* Jarak bawah secukupnya */
+        padding-bottom: 80px;
         position: relative;
         overflow: hidden;
     }
@@ -26,20 +26,17 @@
         opacity: 0.05;
     }
 
-    /* 2. WRAPPER UTAMA (Mengatur Posisi Konten) */
     .main-content {
-        margin-top: -40px; /* Naik sedikit ke atas background agar cantik tapi aman */
+        margin-top: -40px;
         position: relative;
         z-index: 10;
     }
 
-    /* Di HP, hilangkan efek naik agar tidak berantakan */
     @media (max-width: 991.98px) {
         .hero-section { padding-bottom: 40px; }
         .main-content { margin-top: 0; }
     }
 
-    /* 3. CARD STYLE */
     .card-clean {
         background: white;
         border: 1px solid #e2e8f0;
@@ -48,15 +45,13 @@
         overflow: hidden;
     }
 
-    /* 4. SIDEBAR STICKY (Sangat Penting) */
     .sidebar-sticky {
-        position: -webkit-sticky; /* Support Safari */
+        position: -webkit-sticky;
         position: sticky;
-        top: 100px; /* Jarak berhenti dari atas layar */
+        top: 100px;
         z-index: 99;
     }
 
-    /* 5. COMPONENTS */
     .btn-primary-custom {
         background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
         border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px;
@@ -128,12 +123,10 @@
 
 {{-- B. MAIN CONTENT --}}
 <div class="container main-content pb-5 mt-2">
-    
     <div class="row align-items-start">
         
         {{-- 1. KOLOM KIRI (Konten Utama) --}}
         <div class="col-lg-8 mb-5">
-            
             {{-- Tab Menu --}}
             <div class="d-flex gap-2 mb-4 mt-3">
                 <button class="btn btn-dark shadow-sm tab-btn">Tentang Kursus</button>
@@ -196,7 +189,6 @@
         {{-- 2. KOLOM KANAN (Sidebar Pembayaran) --}}
         <div class="col-lg-4 mt-5">
             <div class="sidebar-sticky"> 
-                
                 <div class="card-clean p-4">
                     
                     {{-- Thumbnail --}}
@@ -211,56 +203,80 @@
                         </div>
                     </div>
 
-                    {{-- Harga --}}
-                    <div class="text-center mb-4">
-                        @if($course->price == 0)
-                            <h2 class="fw-bold text-success mb-0">GRATIS</h2>
-                        @else
-                            <h2 class="fw-bold text-dark mb-0">Rp {{ number_format($course->price, 0, ',', '.') }}</h2>
-                        @endif
-                    </div>
+                    {{-- === FITUR VOUCHER & HARGA DINAMIS === --}}
                     
+                    {{-- Form Voucher --}}
+                    @auth
+                    @if($course->price > 0 && !auth()->user()->hasPurchased($course->id))
+                        <div class="mb-3">
+                            <label class="form-label small font-weight-bold text-muted text-uppercase">Punya Voucher?</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm" id="voucher-code" placeholder="Kode Voucher">
+                                <button class="btn btn-dark btn-sm" type="button" id="apply-voucher-btn">Gunakan</button>
+                            </div>
+                            <small id="voucher-feedback" class="d-block mt-1"></small>
+                        </div>
+                    @endif
+                    @endauth
+
+                    {{-- Rincian Harga --}}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Harga Kursus</span>
+                            @if($course->price == 0)
+                                <span class="fw-bold text-success">GRATIS</span>
+                            @else
+                                <span class="fw-bold text-dark" id="display-original-price">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
+                            @endif
+                        </div>
+
+                        {{-- Baris Diskon (Hidden Default) --}}
+                        <div class="d-flex justify-content-between align-items-center mb-1 text-success" id="discount-row" style="display: none;">
+                            <span class="small">Diskon Voucher</span>
+                            <span class="small fw-bold" id="display-discount">- Rp 0</span>
+                        </div>
+
+                        <hr class="my-2 border-light">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="font-weight-bold text-dark">Total Bayar</span>
+                            @if($course->price == 0)
+                                <span class="h4 text-success font-weight-bold mb-0">GRATIS</span>
+                            @else
+                                <span class="h4 text-primary font-weight-bold mb-0" id="display-final-price">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
                     {{-- TOMBOL ACTION & PAYMENT LOGIC --}}
-<div class="d-grid gap-2 mb-4">
-    @auth
-        {{-- LOGIKA UTAMA: Cek Pembelian --}}
-        @if(auth()->user()->hasPurchased($course->id))
-            
-            {{-- JIKA SUDAH BELI: Tampilkan Tombol Lanjut Belajar --}}
-            <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn btn-success btn-lg btn-block w-100 shadow-sm font-weight-bold" style="border-radius: 12px;">
-                <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
-            </a>
-
-        @else
-            {{-- JIKA BELUM BELI --}}
-            
-            @if($course->price > 0)
-                {{-- Tombol Beli --}}
-                <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
-                    Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
-                </button>
-            @else
-                {{-- Tombol Gratis --}}
-                <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
-                    Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
-                </a>
-            @endif
-
-            {{-- Indikator Loading --}}
-            <div id="loading-payment" class="text-center mt-2" style="display: none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <p class="text-muted small mt-1">Memproses pembayaran...</p>
-            </div>
-        @endif
-
-    @else
-        <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
-            Login untuk Membeli <i class="fas fa-lock ms-2"></i>
-        </a>
-    @endauth
-</div>
+                    <div class="d-grid gap-2 mb-4">
+                        @auth
+                            @if(auth()->user()->hasPurchased($course->id))
+                                <a href="{{ route('user.courses.learning', ['slug' => $course->id]) }}" class="btn btn-success btn-lg w-100 font-weight-bold">
+                                    <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
+                                </a>
+                            @else
+                                @if($course->price > 0)
+                                    <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
+                                        Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
+                                    </button>
+                                @else
+                                    <a href="{{ route('user.courses.learning', ['slug' => $course->id]) }}" class="btn-primary-custom text-center text-decoration-none">
+                                        Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
+                                    </a>
+                                @endif
+                                
+                                <div id="loading-payment" class="text-center mt-2" style="display: none;">
+                                    <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                                    <span class="text-muted small ml-2">Memproses...</span>
+                                </div>
+                            @endif
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
+                                Login untuk Membeli <i class="fas fa-lock ms-2"></i>
+                            </a>
+                        @endauth
+                    </div>
 
                     {{-- Fitur --}}
                     <div class="bg-light p-3 rounded-3">
@@ -282,26 +298,114 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.clientKey') }}"></script>
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
 
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            // --- 1. SETUP VARIABLE ---
             const payButton = document.getElementById('pay-button');
+            const voucherBtn = document.getElementById('apply-voucher-btn');
+            const voucherInput = document.getElementById('voucher-code');
             const loadingIndicator = document.getElementById('loading-payment');
+            
+            // State Harga & Voucher
+            let currentVoucherId = null; 
+            let originalPrice = {{ $course->price }};
+            
+            // Helper Format Rupiah
+            const formatRupiah = (number) => {
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+            }
 
-            // Cek apakah tombol ada (hanya muncul jika user login & kursus berbayar)
+            // --- 2. LOGIKA CEK VOUCHER ---
+            if (voucherBtn) {
+                voucherBtn.addEventListener('click', async function() {
+                    const code = voucherInput.value.trim();
+                    const feedback = document.getElementById('voucher-feedback');
+                    const discountRow = document.getElementById('discount-row');
+                    const displayDiscount = document.getElementById('display-discount');
+                    const displayFinal = document.getElementById('display-final-price');
+
+                    if (!code) {
+                        feedback.innerHTML = '<span class="text-danger">Masukkan kode voucher.</span>';
+                        return;
+                    }
+
+                    // UI Loading
+                    voucherBtn.disabled = true;
+                    voucherBtn.innerText = '...';
+
+                    try {
+                        const response = await fetch("{{ route('user.payment.check_voucher') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({
+                                code: code,
+                                course_id: "{{ $course->id }}"
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.status === 'success') {
+                            // Sukses: Simpan ID Voucher
+                            currentVoucherId = data.data.voucher_id;
+                            
+                            // Update UI
+                            feedback.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
+                            voucherInput.classList.add('is-valid');
+                            voucherInput.classList.remove('is-invalid');
+                            voucherInput.disabled = true; 
+                            voucherBtn.innerText = 'Terpasang';
+
+                            // Update Harga di Tampilan
+                            discountRow.style.display = 'flex';
+                            displayDiscount.innerText = '- ' + formatRupiah(data.data.discount);
+                            displayFinal.innerText = formatRupiah(data.data.final_price);
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Voucher Berhasil!',
+                                text: `Anda hemat ${formatRupiah(data.data.discount)}`,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+
+                        } else {
+                            throw new Error(data.message || 'Voucher tidak valid.');
+                        }
+
+                    } catch (error) {
+                        console.error(error);
+                        currentVoucherId = null; // Reset voucher
+                        
+                        feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${error.message}</span>`;
+                        voucherInput.classList.add('is-invalid');
+                        voucherBtn.disabled = false;
+                        voucherBtn.innerText = 'Gunakan';
+                        
+                        // Sembunyikan baris diskon
+                        discountRow.style.display = 'none';
+                        displayFinal.innerText = formatRupiah(originalPrice);
+                    }
+                });
+            }
+
+            // --- 3. LOGIKA PEMBAYARAN (PROCESS) ---
             if (payButton) {
                 payButton.addEventListener('click', async function(e) {
                     e.preventDefault();
 
-                    // --- STATE: LOADING ---
+                    // UI Loading
                     payButton.disabled = true;
                     payButton.innerHTML = 'Memuat...';
                     loadingIndicator.style.display = 'block';
 
                     try {
-                        // --- STEP 1: Minta Token ke Controller ---
                         const response = await fetch("{{ route('user.payment.process') }}", {
                             method: "POST",
                             headers: {
@@ -311,47 +415,55 @@
                             },
                             body: JSON.stringify({
                                 course_id: "{{ $course->id }}",
-                                price: "{{ $course->price }}"
+                                price: "{{ $course->price }}",
+                                voucher_id: currentVoucherId // Kirim ID Voucher jika ada
                             })
                         });
 
-                        // Cek jika controller error (bukan JSON)
-                        if (!response.ok) {
-                            throw new Error('Terjadi kesalahan pada server.');
-                        }
-
                         const data = await response.json();
 
-                        // --- STATE: SELESAI LOADING ---
+                        // Reset UI
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>';
 
-                        // --- STEP 2: Handle Respon Controller ---
-                        if (data.status === 'success' || data.status === 'pending') {
-                            
-                            // Munculkan Popup Midtrans
+                        // --- HANDLE RESPONSE ---
+                        
+                        // KASUS 1: Ternyata sudah lunas (User reload/tutup tab sebelumnya)
+                        if (data.status === 'paid') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Pembayaran Ditemukan!',
+                                text: 'Sistem menemukan pembayaran Anda sebelumnya. Halaman akan dimuat ulang.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload(); 
+                            });
+                        } 
+                        // KASUS 2: Transaksi Baru / Lanjut Bayar (Munculkan Snap)
+                        else if (data.status === 'success' || data.status === 'pending') {
                             window.snap.pay(data.snap_token, {
                                 onSuccess: function(result) {
-                                    // Redirect ke halaman sukses dengan parameter
                                     window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement";
                                 },
                                 onPending: function(result) {
-                                    Swal.fire('Menunggu Pembayaran', 'Silakan selesaikan pembayaran Anda.', 'info');
+                                    Swal.fire('Menunggu', 'Selesaikan pembayaran Anda.', 'info');
                                 },
                                 onError: function(result) {
                                     Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
                                 },
                                 onClose: function() {
-                                    Swal.fire('Dibatalkan', 'Anda menutup popup pembayaran.', 'warning');
+                                    Swal.fire('Dibatalkan', 'Anda menutup popup.', 'warning');
                                 }
                             });
-
-                        } else if (data.status === 'free') {
-                            // Jika kursus gratis (ditangani controller), langsung redirect
+                        } 
+                        // KASUS 3: Gratis (Diskon 100%)
+                        else if (data.status === 'free') {
                             window.location.href = data.redirect_url;
-                        } else {
-                            // Error dari controller (misal: voucher salah, dll)
+                        } 
+                        // KASUS 4: Error
+                        else {
                             Swal.fire('Gagal', data.message || 'Gagal memproses.', 'error');
                         }
 
@@ -360,7 +472,7 @@
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Coba Lagi';
-                        Swal.fire('Oops...', error.message, 'error');
+                        Swal.fire('Oops...', 'Terjadi kesalahan sistem.', 'error');
                     }
                 });
             }
