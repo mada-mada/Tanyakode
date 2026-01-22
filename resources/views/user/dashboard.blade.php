@@ -19,7 +19,7 @@
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
         <h1 class="fw-bold text-navy mb-2">
-            Selamat Datang, <span class="text-accent">{{ Auth::user()->full_name ?? Auth::user()->username }}</span>
+            Selamat Datang, <span class="text-navy">{{ Auth::user()->full_name ?? Auth::user()->username }}</span>
         </h1>
         <p class="text-muted">Teruslah belajar dan raih pencapaian baru hari ini</p>
     </div>
@@ -49,7 +49,7 @@
         <div class="stat-card delay-2 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(100, 255, 218, 0.1);">
-                    <i class="fa-solid fa-chart-line text-accent"></i>
+                    <i class="fa-solid fa-chart-line text-navy"></i>
                 </div>
                 <div>
                     <h3 class="stat-number fw-bold mb-0 text-navy">
@@ -77,7 +77,7 @@
         <div class="stat-card delay-4 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(100, 255, 218, 0.1);">
-                    <i class="fa-solid fa-certificate text-accent"></i>
+                    <i class="fa-solid fa-certificate text-navy"></i>
                 </div>
                 <div>
                     <h3 class="stat-number fw-bold mb-0 text-navy">
@@ -156,7 +156,7 @@
                                         <span class="badge badge-navy mb-2 text-uppercase">{{ $course->level ?? 'Course' }}</span>
                                         <h6 class="fw-bold mb-1 text-navy">{{ $course->title }}</h6>
                                     </div>
-                                    <i class="fa-solid fa-code text-accent fa-lg"></i>
+                                    <i class="fa-solid fa-code text-navy fa-lg"></i>
                                 </div>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
