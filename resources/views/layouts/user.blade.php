@@ -442,12 +442,12 @@
                     <span id="notif-badge" class="notification-badge" style="display:none"></span>
                 </a>
             </div>
-            <div class="nav-item">
-                {{-- <a href="{{ route('user.profile.show') }}" class="btn btn-outline-navy"> --}}
-                    <i class="fa-solid fa-user"></i>
-                    <span>Profil</span>
-                </a>
-            </div>
+            <div class="nav-item {{ Request::is('user/profile*') ? 'active' : '' }}">
+                <a href="{{ route('user.profiles.show') }}">
+                          <i class="fa-solid fa-user"></i>
+                          <span>Profil</span>
+                       </a>
+              </div>
         </div>
 
         <div class="position-absolute bottom-0 start-0 end-0 p-4">

@@ -81,6 +81,11 @@ Route::middleware(['auth'])->group(function() {
 
         // 2. STUDENT / USER
         Route::middleware(['role:student'])->prefix('user')->name('user.')->group(function () {
+ 
+            Route::get('/profile', [UserController::class, 'show'])->name('profiles.show');
+            Route::get('/profile/edit', [UserController::class, 'edit'])->name('profiles.edit');
+            Route::put('/profile/update', [UserController::class, 'update'])->name('profiles.update');
+
             Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
             Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
             Route::get('/courses', [UserCourseController::class, 'index'])->name('courses.index');
