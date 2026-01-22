@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\user\UserController;
+use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\superadmin\Superadmincontroller;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
@@ -23,7 +23,7 @@ use App\Http\Controllers\AdminSekolah\AdminSekolahCourseController;
 use App\Http\Controllers\AdminSekolah\AdminSekolahModuleController;
 use App\Http\Controllers\AdminSekolah\AdminSekolahModuleContentController;
 
-use App\Http\Controllers\user\AllCourseController;
+use App\Http\Controllers\User\AllCourseController;
 use App\Http\Middleware\CekUserIsActive;
 use Illuminate\Support\Facades\DB;
 
