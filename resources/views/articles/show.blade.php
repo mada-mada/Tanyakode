@@ -410,7 +410,7 @@
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo">
-                <img src="{{ asset('images/logoputih.png') }}" alt="Logo TanyaKode" class="logo-img">
+                <img src="{{ asset('images/logoputih.jpg') }}" alt="Logo TanyaKode" class="logo-img">
                 TanyaKode
             </a>
             <div class="navigation">
