@@ -83,25 +83,33 @@
                 <div class="card card-custom h-100">
 
                     {{-- BAGIAN GAMBAR/THUMBNAIL --}}
-                    <div class="bg-dark-theme position-relative text-center d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
-                        
-                        {{-- Badge Level di Atas Gambar --}}
-                        <span class="badge {{ $levelConfig['class'] }} position-absolute shadow-sm" style="top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; z-index: 10;">
-                            {{ $levelConfig['label'] }}
-                        </span>
+                   <div class="bg-dark-theme p-0 position-relative text-center d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
+    
+    {{-- Badge Level (Beginner/Expert) --}}
+    <span class="badge {{ $levelConfig['class'] }} position-absolute shadow-sm" style="top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; z-index: 10;">
+        {{ $levelConfig['label'] }}
+    </span>
 
-                        @if($course->thumbnail)
-                            <img src="{{ asset('storage/' . $course->thumbnail) }}" 
-                                 alt="{{ $courseName }}" 
-                                 class="course-thumbnail">
-                        @else
-                            {{-- Fallback jika gambar kosong --}}
-                            <h1 class="text-cyan-theme fw-bold m-0 position-relative" style="font-size: 6rem; opacity: 0.4;">
-                                {{ $initials }}
-                            </h1>
-                        @endif
-                    </div>
+    {{-- LOGIKA MENAMPILKAN GAMBAR (MENGGUNAKAN thumbnail_url) --}}
+    @if($course->thumbnail_url && file_exists(public_path('storage/' . $course->thumbnail_url)))
+        <img src="{{ asset('storage/' . $course->thumbnail_url) }}" 
+             alt="{{ $courseName }}" 
+             class="w-100 h-100 position-absolute top-0 start-0" 
+             style="object-fit: cover;">
+    @else
+        {{-- Fallback: Tampilkan Inisial jika gambar tidak ada atau file tidak ditemukan --}}
+        <h1 class="text-cyan-theme fw-bold m-0 position-relative" style="font-size: 6rem; z-index: 5; opacity: 0.5;">
+            {{ $initials }}
+        </h1>
+    @endif
 
+    {{-- Overlay opsional jika kursus ini khusus untuk sekolah (Eksklusif) --}}
+    @if($course->school_id)
+        <div class="position-absolute bottom-0 start-0 w-100 bg-warning text-dark py-1 small fw-bold" style="z-index: 11; opacity: 0.9;">
+            <i class="fas fa-school me-1"></i> EKSKLUSIF SEKOLAH
+        </div>
+    @endif
+</div>
                     <div class="card-body p-4 d-flex flex-column">
                         <h5 class="fw-bold text-dark mb-2">{{ $courseName }}</h5>
 
