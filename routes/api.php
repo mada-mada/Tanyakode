@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
 use App\Http\Controllers\superadmin\SchoolAdminController;
 use App\Http\Controllers\superadmin\SchoolController;
-use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
-use App\Http\Controllers\superadmin\Superadmincontroller;
+use App\Http\Controllers\Superadmin\Superadmin_sekolahcontroller;
+use App\Http\Controllers\Superadmin\Superadmincontroller;
 use App\Http\Controllers\User\UserController;
 
 Route::post('/superadmin/admins', [Superadmincontroller::class, 'store']);
