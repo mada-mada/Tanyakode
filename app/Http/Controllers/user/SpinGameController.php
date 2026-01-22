@@ -16,15 +16,14 @@ class SpinGameController extends Controller
 {
     public function index()
     {
-        $rewards = SpinReward::where('is_active', true)
-            ->orderBy('id')
-            ->get();
+        $rewards = SpinReward::where('is_active', true)->orderBy('id')->get();
         
         $todaySpins = SpinLog::where('user_id', Auth::id())
             ->whereDate('created_at', Carbon::today())
             ->count();
-                        
-        $maxSpinsPerDay = 1;
+        
+        // Ubah kesempatan menjadi 2 kali
+        $maxSpinsPerDay = 2; 
         $canSpin = $todaySpins < $maxSpinsPerDay;
 
         return view('user.spin_game.index', compact('rewards', 'canSpin', 'todaySpins', 'maxSpinsPerDay'));
@@ -33,7 +32,7 @@ class SpinGameController extends Controller
     public function spinProcess(Request $request)
     {
         $user = Auth::user();
-        $maxSpinsPerDay = 1;
+        $maxSpinsPerDay = 2; // Ubah kesempatan menjadi 2 kali
 
         $todaySpins = SpinLog::where('user_id', $user->id)
             ->whereDate('created_at', Carbon::today())
@@ -46,9 +45,7 @@ class SpinGameController extends Controller
             ], 403);
         }
 
-        $rewards = SpinReward::where('is_active', true)
-            ->orderBy('id')
-            ->get();
+        $rewards = SpinReward::where('is_active', true)->orderBy('id')->get();
         
         if ($rewards->isEmpty()) {
             return response()->json([
@@ -57,6 +54,7 @@ class SpinGameController extends Controller
             ], 400);
         }
 
+        // Logika Pengundian (Weighted Random)
         $totalWeight = $rewards->sum('probability');
         $random = rand(1, $totalWeight);
         $currentWeight = 0;
@@ -70,13 +68,6 @@ class SpinGameController extends Controller
             }
         }
 
-        if (!$winningReward) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak dapat menentukan hadiah.'
-            ], 500);
-        }
-
         DB::beginTransaction();
         try {
             $spinLog = SpinLog::create([
@@ -88,66 +79,65 @@ class SpinGameController extends Controller
                 'created_at' => now(),
             ]);
 
-            // Jika hadiahnya Voucher, buatkan Vouchernya
             if ($winningReward->type == 'voucher') {
                 Voucher::create([
                     'code' => 'SPIN-' . strtoupper(Str::random(5)),
                     'user_id' => $user->id,
                     'amount' => $winningReward->voucher_amount,
                     'is_active' => true,
-                    // Tambahkan field lain sesuai tabel vouchers Anda
                 ]);
             }
 
             DB::commit();
 
-            return response()->json([
-                'status' => 'success',
-                'reward_id' => $winningReward->id,
-                'message' => $winningReward->type == 'zonk' ? 'Anda kurang beruntung!' : 'Selamat! Anda dapat voucher.'
-            ]);
+            // Hitung derajat pemberhentian
+            $degree = $this->calculateDegree($winningReward->id);
 
-        // ... kode sebelumnya (DB::beginTransaction, logic spin, dll) ...
+            return response()->json([
+                'success' => true,
+                'reward_id' => $winningReward->id,
+                'degree' => $degree,
+                'reward_name' => $winningReward->name,
+                'message' => $this->getRewardMessage($winningReward),
+                'type' => $winningReward->type,
+                'amount' => $winningReward->voucher_amount ?? 0
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal memproses spin.'], 500);
         }
     }
 
     private function getRewardMessage($reward)
     {
         switch ($reward->type) {
-            case 'voucher':
-                return 'Selamat! Anda mendapatkan voucher Rp ' . number_format($reward->voucher_amount, 0, ',', '.');
-            case 'free_course':
-                return 'Selamat! Anda mendapatkan akses course gratis!';
-            case 'zonk':
-                return 'Maaf, Anda kurang beruntung. Coba lagi besok!';
-            default:
-                return 'Selamat! Anda mendapatkan hadiah!';
+            case 'voucher': return 'Selamat! Anda mendapatkan voucher Rp ' . number_format($reward->voucher_amount, 0, ',', '.');
+            case 'free_course': return 'Selamat! Anda mendapatkan akses course gratis!';
+            case 'zonk': return 'Maaf, Anda kurang beruntung. Coba lagi!';
+            default: return 'Selamat! Anda mendapatkan hadiah!';
         }
     }
 
     private function calculateDegree($rewardId)
     {
-        $rewards = SpinReward::where('is_active', true)
-            ->orderBy('id')
-            ->get();
-        
+        $rewards = SpinReward::where('is_active', true)->orderBy('id')->get();
         $segments = $rewards->pluck('id')->values();
-        
         $index = $segments->search($rewardId);
         
-        if ($index === false) {
-            return 0;
-        }
+        if ($index === false) return 0;
         
         $segmentAngle = 360 / $segments->count();
+        // Return titik tengah segmen
         return ($index * $segmentAngle) + ($segmentAngle / 2);
+    }
+
+    public function history()
+    {
+        $history = SpinLog::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        return response()->json($history);
     }
 }

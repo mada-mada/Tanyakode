@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function() {
 
             Route::get('/spin-wheel', [SpinGameController::class, 'index'])->name('spin');
             Route::post('/spin-wheel-process', [SpinGameController::class, 'spinProcess'])->name('spin.process');
+            Route::get('/spin-history', [SpinGameController::class, 'history'])->name('spin.history');
 
             Route::post('/join-school', [UserController::class, 'joinSchool'])->name('join_school');
             
