@@ -35,7 +35,7 @@ $userEnrollments = DB::table('course_enrollments')
 
 <!-- LINK PROFIL -->
 <div class="mb-4">
-    <a href="{{ route('user.profile.show') }}" class="btn btn-outline-navy">
+    {{-- <a href="{{ route('user.profile.show') }}" class="btn btn-outline-navy"> --}}
         <i class="fa-solid fa-user me-2"></i> Profil Saya
     </a>
 </div>

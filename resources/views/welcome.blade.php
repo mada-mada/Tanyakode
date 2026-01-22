@@ -1070,8 +1070,8 @@
                 </nav>
                 
                 <div class="nav-buttons">
-                    <a href="#login" class="btn btn-outline">Masuk</a>
-                    <a href="#register" class="btn btn-primary">Belajar Gratis</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline">Masuk</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary">Belajar Gratis</a>
                 </div>
             </div>
         </div>

@@ -8,12 +8,12 @@
     
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
 
-    /* 1. HERO SECTION (Header Atas) */
+    /* HERO SECTION */
     .hero-section {
         background: radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 90%);
         color: white;
         padding-top: 60px;
-        padding-bottom: 80px; /* Jarak bawah secukupnya */
+        padding-bottom: 80px;
         position: relative;
         overflow: hidden;
     }
@@ -26,20 +26,17 @@
         opacity: 0.05;
     }
 
-    /* 2. WRAPPER UTAMA (Mengatur Posisi Konten) */
     .main-content {
-        margin-top: -40px; /* Naik sedikit ke atas background agar cantik tapi aman */
+        margin-top: -40px;
         position: relative;
         z-index: 10;
     }
 
-    /* Di HP, hilangkan efek naik agar tidak berantakan */
     @media (max-width: 991.98px) {
         .hero-section { padding-bottom: 40px; }
         .main-content { margin-top: 0; }
     }
 
-    /* 3. CARD STYLE */
     .card-clean {
         background: white;
         border: 1px solid #e2e8f0;
@@ -48,15 +45,13 @@
         overflow: hidden;
     }
 
-    /* 4. SIDEBAR STICKY (Sangat Penting) */
     .sidebar-sticky {
-        position: -webkit-sticky; /* Support Safari */
+        position: -webkit-sticky;
         position: sticky;
-        top: 100px; /* Jarak berhenti dari atas layar */
+        top: 100px;
         z-index: 99;
     }
 
-    /* 5. COMPONENTS */
     .btn-primary-custom {
         background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
         border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px;
@@ -99,68 +94,39 @@
         foreach($course->modules as $mod) {
             $totalContent += $mod->contents ? $mod->contents->count() : 0;
         }
-    </style>
-</head>
-<body>
-    <div class="bg-animation">
-        <div class="particles" id="particles"></div>
-    </div>
+    }
+@endphp
 
-    <header class="nav-header">
-        <div class="nav-container">
-            <a href="{{ route('user.dashboard') }}" class="logo">
-                <div class="logo-icon">TK</div>
-                <div class="logo-text">Tanya<span>Kode</span></div>
-            </a>
-            
-            <nav class="nav-menu">
-                <a href="{{ route('user.dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ route('user.courses.index') }}" class="nav-link">Belajar</a>
-                <a href="{{ route('user.profile.show') }}" class="nav-link active">Profil</a>
-                <form method="POST" action="{{ route('logout') }}" class="logout-form">
-                    @csrf
-                    <button type="submit" class="logout-btn">Keluar</button>
-                </form>
-            </nav>
-        </div>
-    </header>
-
-    <div class="container-fluid">
+{{-- A. HERO SECTION --}}
+<div class="hero-section">
+    <div class="hero-bg-pattern"></div>
+    <div class="container position-relative">
         <div class="row">
-            <div class="col-md-4">
-                <div class="card card-primary card-outline">
-                    <div class="card-body box-profile">
-                        <img class="profile-user-img img-fluid img-circle"
-                             src="https://ui-avatars.com/api/?name={{ urlencode($user->nama_lengkap ?? $user->name) }}&background=4361ee&color=ffffff&size=150&font-size=0.5"
-                             alt="User profile picture">
-
-                        <h3 class="profile-username mt-3">
-                            {{ $user->nama_lengkap ?? $user->name }}
-                        </h3>
-
-                        <p class="text-muted">{{ $user->email }}</p>
-                        
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                {{-- TODO: ambil dari tabel user_progress --}}
-                                <div class="stat-number">-</div>
-                                <div class="stat-label">Progress</div>
-                            </div>
-                            <div class="stat-card">
-                                {{-- TODO: ambil dari tabel completed_courses --}}
-                                <div class="stat-number">-</div>
-                                <div class="stat-label">Selesai</div>
-                            </div>
-                        </div>
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <span class="badge bg-white bg-opacity-10 border border-white border-opacity-20 text-white px-3 py-2 rounded-pill fw-bold">
+                        {{ strtoupper($course->level ?? 'GENERAL') }}
+                    </span>
+                </div>
+                <h1 class="display-5 fw-bold mb-3 lh-sm">{{ $course->title }}</h1>
+                <p class="text-white text-opacity-75 mb-4 lead fs-6" style="max-width: 600px; line-height: 1.7;">
+                    {{ Str::limit($course->description, 150) }}
+                </p>
+                <div class="d-flex flex-wrap gap-4 text-sm text-white text-opacity-90 fw-medium">
+                    <span class="me-3"><i class="fas fa-book-open me-2"></i> {{ $course->modules ? $course->modules->count() : 0 }} Modul</span>
+                    <span><i class="fas fa-film me-2"></i> {{ $totalContent }} Materi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- B. MAIN CONTENT --}}
 <div class="container main-content pb-5 mt-2">
-    
     <div class="row align-items-start">
         
         {{-- 1. KOLOM KIRI (Konten Utama) --}}
         <div class="col-lg-8 mb-5">
-            
             {{-- Tab Menu --}}
             <div class="d-flex gap-2 mb-4 mt-3">
                 <button class="btn btn-dark shadow-sm tab-btn">Tentang Kursus</button>
@@ -181,59 +147,48 @@
                     <span class="text-muted small fw-bold">{{ $course->modules ? $course->modules->count() : 0 }} Modul • {{ $totalContent }} Materi</span>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Level Saat Ini</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="progress-container">
-                            <div class="progress-info">
-                                {{-- TODO: ambil dari tabel user_levels --}}
-                                <span>-</span>
-                                <span>0%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 0%;"></div>
+                <div class="accordion" id="accordionSyllabus">
+                    @forelse($course->modules as $index => $module)
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ $module->id }}">
+                            <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $module->id }}">
+                                <div class="d-flex justify-content-between w-100 me-3 align-items-center">
+                                    <span class="fw-bold">{{ $module->title }}</span>
+                                    <small class="text-muted bg-white px-2 py-1 rounded border">
+                                        {{ $module->contents ? $module->contents->count() : 0 }} Materi
+                                    </small>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ $module->id }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionSyllabus">
+                            <div class="accordion-body bg-white pt-2">
+                                <ul class="list-unstyled mb-0">
+                                    @forelse($module->contents as $content)
+                                        <li class="d-flex align-items-center py-2 border-bottom last:border-0">
+                                            @if(Str::contains(strtolower($content->content_type ?? 'video'), 'video'))
+                                                <div class="bg-light rounded-circle p-2 me-3 text-primary"><i class="fas fa-play fa-sm"></i></div>
+                                            @else
+                                                <div class="bg-light rounded-circle p-2 me-3 text-warning"><i class="fas fa-file-alt fa-sm"></i></div>
+                                            @endif
+                                            <span class="text-dark">{{ $content->title }}</span>
+                                        </li>
+                                    @empty
+                                        <li class="text-muted small">Belum ada materi.</li>
+                                    @endforelse
+                                </ul>
                             </div>
                         </div>
-                        
-                        <div class="badge-container mt-3">
-                            {{-- TODO: ambil dari tabel user_badges --}}
-                            <span class="badge badge-primary"><i class="fas fa-medal"></i> Belum ada badge</span>
-                        </div>
                     </div>
+                    @empty
+                        <div class="alert alert-light border text-center">Belum ada kurikulum.</div>
+                    @endforelse
                 </div>
             </div>
-
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-user-circle"></i> Biodata</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <strong><i class="fas fa-school"></i> Sekolah</strong>
-                            <p class="text-muted">{{ $user->sekolah ?? '-' }}</p>
-                        </div>
-
-                        <hr>
-
-                        <div class="form-group">
-                            <strong><i class="fas fa-map-marker-alt"></i> Alamat</strong>
-                            <p class="text-muted">{{ $user->alamat ?? '-' }}</p>
-                        </div>
-
-                        <hr>
-
-                        <div class="form-group">
-                            <strong><i class="fas fa-phone"></i> No HP</strong>
-                            <p class="text-muted">{{ $user->no_hp ?? '-' }}</p>
-                        </div>
+        </div>
 
         {{-- 2. KOLOM KANAN (Sidebar Pembayaran) --}}
         <div class="col-lg-4 mt-5">
             <div class="sidebar-sticky"> 
-                
                 <div class="card-clean p-4">
                     
                     {{-- Thumbnail --}}
@@ -248,56 +203,91 @@
                         </div>
                     </div>
 
-                    {{-- Harga --}}
-                    <div class="text-center mb-4">
-                        @if($course->price == 0)
-                            <h2 class="fw-bold text-success mb-0">GRATIS</h2>
-                        @else
-                            <h2 class="fw-bold text-dark mb-0">Rp {{ number_format($course->price, 0, ',', '.') }}</h2>
-                        @endif
-                    </div>
+                    {{-- === FITUR VOUCHER & HARGA DINAMIS === --}}
                     
+                    {{-- Form Voucher --}}
+                    @auth
+                        @if($course->price > 0 && !auth()->user()->hasPurchased($course->id))
+                            <div class="mb-3">
+                                <label class="form-label small font-weight-bold text-muted text-uppercase">Punya Voucher?</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" id="voucher-code" placeholder="Kode Voucher">
+                                    <button class="btn btn-dark btn-sm" type="button" id="apply-voucher-btn">Gunakan</button>
+                                </div>
+                                <small id="voucher-feedback" class="d-block mt-1"></small>
+                            </div>
+                        @endif
+                    @endauth
+
+                    {{-- Rincian Harga --}}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Harga Kursus</span>
+                            @if($course->price == 0)
+                                <span class="fw-bold text-success">GRATIS</span>
+                            @else
+                                <span class="fw-bold text-dark" id="display-original-price">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
+                            @endif
+                        </div>
+
+                        {{-- Baris Diskon (Hidden Default) --}}
+                        <div class="d-flex justify-content-between align-items-center mb-1 text-success" id="discount-row" style="display: none;">
+                            <span class="small">Diskon Voucher</span>
+                            <span class="small fw-bold" id="display-discount">- Rp 0</span>
+                        </div>
+
+                        <hr class="my-2 border-light">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="font-weight-bold text-dark">Total Bayar</span>
+                            @if($course->price == 0)
+                                <span class="h4 text-success font-weight-bold mb-0">GRATIS</span>
+                            @else
+                                <span class="h4 text-primary font-weight-bold mb-0" id="display-final-price">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
                     {{-- TOMBOL ACTION & PAYMENT LOGIC --}}
-<div class="d-grid gap-2 mb-4">
-    @auth
-        {{-- LOGIKA UTAMA: Cek Pembelian --}}
-        @if(auth()->user()->hasPurchased($course->id))
-            
-            {{-- JIKA SUDAH BELI: Tampilkan Tombol Lanjut Belajar --}}
-            <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn btn-success btn-lg btn-block w-100 shadow-sm font-weight-bold" style="border-radius: 12px;">
-                <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
-            </a>
+                    <div class="d-grid gap-2 mb-4">
+                        @auth
+                            {{-- LOGIKA UTAMA: Cek Pembelian Menggunakan Model User --}}
+                            @if(auth()->user()->hasPurchased($course->id))
+                                
+                                {{-- JIKA SUDAH BELI: Tampilkan Tombol Lanjut Belajar --}}
+                                <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn btn-success btn-lg btn-block w-100 font-weight-bold" style="border-radius: 12px;">
+                                    <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
+                                </a>
 
-        @else
-            {{-- JIKA BELUM BELI --}}
-            
-            @if($course->price > 0)
-                {{-- Tombol Beli --}}
-                <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
-                    Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
-                </button>
-            @else
-                {{-- Tombol Gratis --}}
-                <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
-                    Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
-                </a>
-            @endif
+                            @else
+                                {{-- JIKA BELUM BELI --}}
+                                @if($course->price > 0)
+                                    {{-- Tombol Beli --}}
+                                    <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
+                                        Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
+                                    </button>
+                                @else
+                                    {{-- Tombol Gratis --}}
+                                    <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
+                                        Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
+                                    </a>
+                                @endif
+                                
+                                {{-- Indikator Loading --}}
+                                <div id="loading-payment" class="text-center mt-2" style="display: none;">
+                                    <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <span class="text-muted small ml-2">Memproses pembayaran...</span>
+                                </div>
+                            @endif
 
-            {{-- Indikator Loading --}}
-            <div id="loading-payment" class="text-center mt-2" style="display: none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <p class="text-muted small mt-1">Memproses pembayaran...</p>
-            </div>
-        @endif
-
-    @else
-        <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
-            Login untuk Membeli <i class="fas fa-lock ms-2"></i>
-        </a>
-    @endauth
-</div>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
+                                Login untuk Membeli <i class="fas fa-lock ms-2"></i>
+                            </a>
+                        @endauth
+                    </div>
 
                     {{-- Fitur --}}
                     <div class="bg-light p-3 rounded-3">
@@ -308,35 +298,127 @@
                             <li class="d-flex align-items-center text-muted small"><i class="fas fa-certificate text-success me-2"></i> Sertifikat Penyelesaian</li>
                         </ul>
                     </div>
+
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 @endsection
 
 @push('scripts')
+    {{-- SweetAlert2 untuk Notifikasi --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    {{-- Midtrans Snap JS --}}
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.clientKey') }}"></script>
 
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            // --- 1. SETUP VARIABLE ---
             const payButton = document.getElementById('pay-button');
+            const voucherBtn = document.getElementById('apply-voucher-btn');
+            const voucherInput = document.getElementById('voucher-code');
             const loadingIndicator = document.getElementById('loading-payment');
+            
+            // State Harga & Voucher
+            let currentVoucherId = null; 
+            let originalPrice = {{ $course->price }};
+            
+            // Helper Format Rupiah
+            const formatRupiah = (number) => {
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+            }
 
-            // Cek apakah tombol ada (hanya muncul jika user login & kursus berbayar)
+            // --- 2. LOGIKA CEK VOUCHER ---
+            if (voucherBtn) {
+                voucherBtn.addEventListener('click', async function() {
+                    const code = voucherInput.value.trim();
+                    const feedback = document.getElementById('voucher-feedback');
+                    const discountRow = document.getElementById('discount-row');
+                    const displayDiscount = document.getElementById('display-discount');
+                    const displayFinal = document.getElementById('display-final-price');
+
+                    if (!code) {
+                        feedback.innerHTML = '<span class="text-danger">Masukkan kode voucher.</span>';
+                        return;
+                    }
+
+                    // UI Loading
+                    voucherBtn.disabled = true;
+                    voucherBtn.innerText = '...';
+
+                    try {
+                        const response = await fetch("{{ route('user.payment.check_voucher') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({
+                                code: code,
+                                course_id: "{{ $course->id }}"
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.status === 'success') {
+                            // Sukses: Simpan ID Voucher
+                            currentVoucherId = data.data.voucher_id;
+                            
+                            // Update UI
+                            feedback.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
+                            voucherInput.classList.add('is-valid');
+                            voucherInput.classList.remove('is-invalid');
+                            voucherInput.disabled = true; 
+                            voucherBtn.innerText = 'Terpasang';
+
+                            // Update Harga di Tampilan
+                            discountRow.style.display = 'flex';
+                            displayDiscount.innerText = '- ' + formatRupiah(data.data.discount);
+                            displayFinal.innerText = formatRupiah(data.data.final_price);
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Voucher Berhasil!',
+                                text: `Anda hemat ${formatRupiah(data.data.discount)}`,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+
+                        } else {
+                            throw new Error(data.message || 'Voucher tidak valid.');
+                        }
+
+                    } catch (error) {
+                        console.error(error);
+                        currentVoucherId = null; // Reset voucher
+                        
+                        feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${error.message}</span>`;
+                        voucherInput.classList.add('is-invalid');
+                        voucherBtn.disabled = false;
+                        voucherBtn.innerText = 'Gunakan';
+                        
+                        // Sembunyikan baris diskon
+                        discountRow.style.display = 'none';
+                        displayFinal.innerText = formatRupiah(originalPrice);
+                    }
+                });
+            }
+
+            // --- 3. LOGIKA PEMBAYARAN (PROCESS) ---
             if (payButton) {
                 payButton.addEventListener('click', async function(e) {
                     e.preventDefault();
 
-                    // --- STATE: LOADING ---
+                    // UI Loading
                     payButton.disabled = true;
                     payButton.innerHTML = 'Memuat...';
                     loadingIndicator.style.display = 'block';
 
                     try {
-                        // --- STEP 1: Minta Token ke Controller ---
                         const response = await fetch("{{ route('user.payment.process') }}", {
                             method: "POST",
                             headers: {
@@ -346,47 +428,55 @@
                             },
                             body: JSON.stringify({
                                 course_id: "{{ $course->id }}",
-                                price: "{{ $course->price }}"
+                                price: "{{ $course->price }}",
+                                voucher_id: currentVoucherId // Kirim ID Voucher jika ada
                             })
                         });
 
-                        // Cek jika controller error (bukan JSON)
-                        if (!response.ok) {
-                            throw new Error('Terjadi kesalahan pada server.');
-                        }
-
                         const data = await response.json();
 
-                        // --- STATE: SELESAI LOADING ---
+                        // Reset UI
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>';
 
-                        // --- STEP 2: Handle Respon Controller ---
-                        if (data.status === 'success' || data.status === 'pending') {
-                            
-                            // Munculkan Popup Midtrans
+                        // --- HANDLE RESPONSE ---
+                        
+                        // KASUS 1: Ternyata sudah lunas (User reload/tutup tab sebelumnya)
+                        if (data.status === 'paid') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Pembayaran Ditemukan!',
+                                text: 'Sistem menemukan pembayaran Anda sebelumnya. Halaman akan dimuat ulang.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload(); 
+                            });
+                        } 
+                        // KASUS 2: Transaksi Baru / Lanjut Bayar (Munculkan Snap)
+                        else if (data.status === 'success' || data.status === 'pending') {
                             window.snap.pay(data.snap_token, {
                                 onSuccess: function(result) {
-                                    // Redirect ke halaman sukses dengan parameter
                                     window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement";
                                 },
                                 onPending: function(result) {
-                                    Swal.fire('Menunggu Pembayaran', 'Silakan selesaikan pembayaran Anda.', 'info');
+                                    Swal.fire('Menunggu', 'Selesaikan pembayaran Anda.', 'info');
                                 },
                                 onError: function(result) {
                                     Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
                                 },
                                 onClose: function() {
-                                    Swal.fire('Dibatalkan', 'Anda menutup popup pembayaran.', 'warning');
+                                    Swal.fire('Dibatalkan', 'Anda menutup popup.', 'warning');
                                 }
                             });
-
-                        } else if (data.status === 'free') {
-                            // Jika kursus gratis (ditangani controller), langsung redirect
+                        } 
+                        // KASUS 3: Gratis (Diskon 100%)
+                        else if (data.status === 'free') {
                             window.location.href = data.redirect_url;
-                        } else {
-                            // Error dari controller (misal: voucher salah, dll)
+                        } 
+                        // KASUS 4: Error
+                        else {
                             Swal.fire('Gagal', data.message || 'Gagal memproses.', 'error');
                         }
 
@@ -395,11 +485,10 @@
                         loadingIndicator.style.display = 'none';
                         payButton.disabled = false;
                         payButton.innerHTML = 'Coba Lagi';
-                        Swal.fire('Oops...', error.message, 'error');
+                        Swal.fire('Oops...', 'Terjadi kesalahan sistem.', 'error');
                     }
                 });
             }
         });
     </script>
-</body>
-</html>
+@endpush

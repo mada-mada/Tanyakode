@@ -8,7 +8,7 @@ class ModuleContent extends Model
 {
     protected $fillable = [
         'module_id',
-        'content_type',
+        'type',
         'title',
         'content_body',
         'video_url',

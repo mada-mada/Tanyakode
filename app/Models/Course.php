@@ -21,7 +21,8 @@ class Course extends Model
         'is_premium',
         'has_merchandise_reward',
         'merchandise_name',
-        'thumbnail_url'
+        'thumbnail_url',
+        'description'
     ];
 
     /**
@@ -46,4 +47,10 @@ public function creator()
     // Sesuaikan dengan field 'created_by' di PDF database
     return $this->belongsTo(User::class, 'created_by');
 }
+
+public function enrollments()
+    {
+        return $this->hasMany(CourseEnrollment::class, 'course_id');
+    }
+    
 }

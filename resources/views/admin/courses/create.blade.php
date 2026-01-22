@@ -16,6 +16,11 @@
                     <input type="text" name="title" class="form-control" required placeholder="Contoh: Belajar Laravel Dasar">
                 </div>
 
+            <div class="form-group">
+                    <label>Deskripsi Kursus</label>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Masukkan deskripsi lengkap mengenai materi yang akan dipelajari..."></textarea>
+                </div>
+
                 <div class="form-group">
                     <label>Thumbnail Kursus</label>
                     <input type="file" name="thumbnail" class="form-control" accept="image/*">

@@ -418,6 +418,12 @@
                 </a>
             </div>  
             <div class="nav-item">
+                <a href="{{ route('user.courses.catalog') }}">    
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>Kursus</span>
+                </a>
+            </div>  
+            <div class="nav-item">
                 <a href="#">    
                     <i class="fa-solid fa-credit-card"></i>
                     <span>Pembayaran</span>
@@ -437,7 +443,7 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a href="{{ route('user.profile.show') }}">
+                {{-- <a href="{{ route('user.profile.show') }}" class="btn btn-outline-navy"> --}}
                     <i class="fa-solid fa-user"></i>
                     <span>Profil</span>
                 </a>

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage; // TAMBAHAN PENTING: Untuk akses hapus file
+use Illuminate\Support\Facades\Storage;
 
 class CourseController extends Controller
 {
@@ -36,11 +36,11 @@ class CourseController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string', // Tambahan deskripsi
             'level' => 'required|in:pemula,menengah,expert',
             'price' => 'required_if:level,menengah,expert|nullable|numeric|min:0',
             'has_merchandise_reward' => 'required|boolean',
             'merchandise_name' => 'required_if:has_merchandise_reward,1|nullable|string',
-            // Validasi gambar saat Create
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
         ]);
 
@@ -53,33 +53,29 @@ class CourseController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
         $validated['school_id'] = $user->school_id;
-        $validated['created_by'] = $user->id;
+        $validated['created_by'] = $user->id; 
 
-        // --- UPLOAD GAMBAR BARU ---
         if ($request->hasFile('thumbnail')) {
             $path = $request->file('thumbnail')->store('thumbnails', 'public');
             $validated['thumbnail_url'] = $path;
         }
 
         Course::create($validated);
-        return redirect()->route('courses.index')->with('success', 'Kursus berhasil dibuat.');
-    }
 
-    public function show(Course $course)
-    {
-        $course->load(['modules.contents']);
-        return view('admin.courses.show', compact('course'));
-    }
+        return redirect()->route('courses.index')->with('success', 'Kursus berhasil dibuat.');
+    } // Kurung kurawal tutup yang tadi hilang sudah ditambahkan di sini
 
     public function edit(Course $course)
     {
         $user = Auth::user();
-        if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
+        
+        if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) {
+            abort(403);
+        }
 
         return view('admin.courses.edit', compact('course'));
     }
 
-    // --- BAGIAN UPDATE YANG DIMODIFIKASI ---
     public function update(Request $request, Course $course)
     {
         $user = Auth::user();
@@ -87,11 +83,11 @@ class CourseController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string', // Tambahan deskripsi
             'level' => 'required|in:pemula,menengah,expert',
             'price' => 'required_if:level,menengah,expert|nullable|numeric|min:0',
             'has_merchandise_reward' => 'required|boolean',
             'merchandise_name' => 'required_if:has_merchandise_reward,1|nullable|string',
-            // Validasi gambar saat Edit (Nullable artinya user tidak wajib upload gambar baru)
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -104,19 +100,24 @@ class CourseController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
 
+        // Logika Update Thumbnail: Hapus yang lama jika ada yang baru
+        if ($request->hasFile('thumbnail')) {
+            if ($course->thumbnail_url && Storage::disk('public')->exists($course->thumbnail_url)) {
+                Storage::disk('public')->delete($course->thumbnail_url);
+            }
+            $path = $request->file('thumbnail')->store('thumbnails', 'public');
+            $validated['thumbnail_url'] = $path;
+        }
 
         $course->update($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil diperbarui.');
     }
 
-    // --- BAGIAN DESTROY YANG DIMODIFIKASI ---
     public function destroy(Course $course)
     {
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
-        // --- LOGIKA HAPUS GAMBAR ---
-        // Cek apakah kursus ini punya gambar, jika ya, hapus dari folder storage
         if ($course->thumbnail_url && Storage::disk('public')->exists($course->thumbnail_url)) {
             Storage::disk('public')->delete($course->thumbnail_url);
         }
@@ -128,7 +129,6 @@ class CourseController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-
         $courseQuery = Course::query();
 
         if ($user->role === 'school_admin') {
@@ -138,7 +138,15 @@ class CourseController extends Controller
         }
 
         $totalCourses = $courseQuery->count();
-
         return view('admin.dashboard', compact('totalCourses'));
     }
+
+    public function show(Course $course)
+{
+    // Memuat relasi modul dan konten materi yang ada di database
+    $course->load(['modules.contents']);
+    
+    // Pastikan file view ini sudah Anda buat
+    return view('admin.courses.show', compact('course'));
+}
 }

@@ -224,14 +224,27 @@ class PaymentController extends Controller
     // SUCCESS CALLBACK
     // =========================
     public function success(Request $request)
-    {
-        if ($request->has('order_id')) {
-            $order = Order::where('reference_id', $request->order_id)->first();
-            if ($order) {
-                $order->update(['payment_status' => 'settlement']);
-            }
-        }
+{
+    $course = null;
 
-        return view('user.courses.show');
+    if ($request->has('order_id')) {
+        $order = Order::where('reference_id', $request->order_id)->with('course')->first();
+
+        if ($order) {
+            // Update status jadi lunas
+            $order->update(['payment_status' => 'settlement']);
+
+            // Ambil data course dari relasi order
+            $course = $order->course;
+        }
     }
+
+    // Jika course ketemu, tampilkan halaman show course lagi
+    if ($course) {
+        return redirect()->route('user.courses.show', $course->slug)->with('success', 'Pembayaran Berhasil!');
+    }
+
+    // Jika tidak ketemu (akses langsung tanpa order_id), lempar ke daftar kursus
+    return redirect()->route('user.courses.index');
+   }
 }
