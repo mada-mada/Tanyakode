@@ -310,19 +310,23 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Polling Notifikasi Unread
         function fetchNotif() {
             fetch('/notifications/unread-count')
                 .then(r => r.text())
-                .then(c => {
+                .then(data => {
                     const badge = document.getElementById('notif-badge');
+                    const c = data && data.count ? data.count : 0;
                     if (c > 0) {
                         badge.innerText = c;
                         badge.style.display = 'inline-block';
                     } else {
                         badge.style.display = 'none';
                     }
+                }).catch(err => {
+                    console.warn('Notif fetch failed', err);
                 });
         }
 
@@ -334,9 +338,16 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Content-Type': 'application/json'
                 }
-            }).then(() => {
-                document.getElementById('notif-badge').style.display = 'none';
-                window.location.href = "{{ route('user.dashboard') }}";
+            }).then(r => r.json()).then(data => {
+                if (data && data.status === 'success') {
+                    document.getElementById('notif-badge').style.display = 'none';
+                    window.location.href = "{{ route('user.dashboard') }}";
+                } else {
+                    Swal.fire('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
+                }
+            }).catch(err => {
+                console.error('Notif read failed', err);
+                Swal.fire('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
             });
         }
 

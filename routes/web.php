@@ -68,11 +68,20 @@ Route::middleware(['auth'])->group(function () {
 
   // Notifications
   Route::get('/notifications/unread-count', function () {
-    return DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->count();
+    try {
+      $count = DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->count();
+      return response()->json(['count' => $count]);
+    } catch (\Exception $e) {
+      return response()->json(['count' => 0], 500);
+    }
   });
   Route::post('/notifications/read-all', function () {
-    DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
-    return back();
+    try {
+      DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
+      return response()->json(['status' => 'success']);
+    } catch (\Exception $e) {
+      return response()->json(['status' => 'error'], 500);
+    }
   });
 
   Route::middleware([CekUserIsActive::class])->group(function () {

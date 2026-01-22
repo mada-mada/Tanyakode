@@ -263,9 +263,16 @@
                                 {{-- JIKA BELUM BELI --}}
                                 @if($course->price > 0)
                                     {{-- Tombol Beli --}}
-                                    <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
-                                        Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
-                                    </button>
+                                    @if(auth()->check() && auth()->user()->status === 'verify')
+                                        <button class="btn btn-warning" disabled>
+                                            Verifikasi dulu untuk bisa membeli <i class="fas fa-exclamation-circle ms-2"></i>
+                                        </button>
+                                        <a href="{{ route('otp.verification') }}" class="btn btn-link">Verifikasi Sekarang</a>
+                                    @else
+                                        <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
+                                            Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
+                                        </button>
+                                    @endif
                                 @else
                                     {{-- Tombol Gratis --}}
                                     <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
