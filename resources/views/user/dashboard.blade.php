@@ -4,26 +4,24 @@
 
 @section('content')
 @php
-$notifications = DB::table('notifications')
-    ->where('notifiable_id', auth()->id())
-    ->orderBy('created_at', 'desc')
-    ->get();
+    // Mengambil data notifikasi dan pendaftaran kursus
+    $notifications = DB::table('notifications')
+        ->where('notifiable_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-$userEnrollments = DB::table('course_enrollments')
-    ->where('user_id', auth()->id())
-    ->orderBy('updated_at', 'desc')
-    ->get();
+    $userEnrollments = DB::table('course_enrollments')
+        ->where('user_id', auth()->id())
+        ->orderBy('updated_at', 'desc')
+        ->get();
 @endphp
 
-<!-- HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
-        <h1 class="fw-bold text-navy mb-2" style="color: var(--navy-dark);">
+        <h1 class="fw-bold text-navy mb-2">
             Selamat Datang, <span class="text-accent">{{ Auth::user()->full_name ?? Auth::user()->username }}</span>
         </h1>
-        <p class="text-muted">
-            Teruslah belajar dan raih pencapaian baru hari ini
-        </p>
+        <p class="text-muted">Teruslah belajar dan raih pencapaian baru hari ini</p>
     </div>
     <div class="text-end">
         <span class="badge badge-navy">Student</span>
@@ -33,83 +31,29 @@ $userEnrollments = DB::table('course_enrollments')
     </div>
 </div>
 
-<!-- LINK PROFIL -->
-<div class="mb-4">
-    {{-- <a href="{{ route('user.profile.show') }}" class="btn btn-outline-navy"> --}}
-        <i class="fa-solid fa-user me-2"></i> Profil Saya
-    </a>
-</div>
-
-<!-- NOTIFIKASI -->
-@if($notifications->count() > 0)
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="navy-card delay-1">
-            <div class="navy-card-header d-flex justify-content-between">
-                <h5 class="mb-0 fw-bold">
-                    <i class="fa-solid fa-bell me-2"></i>
-                    Notifikasi
-                </h5>
-                <form method="POST" action="/notifications/read-all">
-                    @csrf
-                    <button class="btn btn-sm btn-secondary">Tandai Dibaca</button>
-                </form>
-            </div>
-            <div class="navy-card-body">
-                @foreach($notifications as $n)
-                    @php $d = json_decode($n->data); @endphp
-                    @if($n->type === 'course_completed')
-                        <div class="alert alert-success">
-                            <strong>{{ $d->title }}</strong><br>
-                            {{ $d->message }}
-                            <div class="mt-2">
-                                <a href="/certificate/{{ $d->course_id }}" class="btn btn-sm btn-primary">
-                                    <i class="fa-solid fa-download me-1"></i> Download Sertifikat
-                                </a>
-                            </div>
-                        </div>
-                    @else
-                        <div class="alert alert-info">
-                            <strong>{{ $d->title ?? 'Notifikasi' }}</strong><br>
-                            {{ $d->message ?? 'Pesan notifikasi' }}
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-<!-- STATISTICS -->
 <div class="row g-4 mb-5">
     <div class="col-md-3">
-        <div class="stat-card delay-1">
+        <div class="stat-card delay-1 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(10, 25, 47, 0.1);">
-                    <i class="fa-solid fa-book text-navy" style="color: var(--navy-dark);"></i>
+                    <i class="fa-solid fa-book text-navy"></i>
                 </div>
                 <div>
-                    <h3 class="stat-number fw-bold mb-0" style="color: var(--navy-dark);">
-                        {{ $userEnrollments->count() }}
-                    </h3>
+                    <h3 class="stat-number fw-bold mb-0 text-navy">{{ $userEnrollments->count() }}</h3>
                     <small class="text-muted">Kursus Aktif</small>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card delay-2">
+        <div class="stat-card delay-2 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(100, 255, 218, 0.1);">
-                    <i class="fa-solid fa-chart-line text-accent" style="color: var(--accent-blue);"></i>
+                    <i class="fa-solid fa-chart-line text-accent"></i>
                 </div>
                 <div>
-                    <h3 class="stat-number fw-bold mb-0" style="color: var(--navy-dark);">
-                        @php
-                            $avgProgress = $userEnrollments->avg('progress_percentage') ?? 0;
-                            echo round($avgProgress, 1) . '%';
-                        @endphp
+                    <h3 class="stat-number fw-bold mb-0 text-navy">
+                        {{ round($userEnrollments->avg('progress_percentage') ?? 0, 1) }}%
                     </h3>
                     <small class="text-muted">Progress Belajar</small>
                 </div>
@@ -117,26 +61,26 @@ $userEnrollments = DB::table('course_enrollments')
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card delay-3">
+        <div class="stat-card delay-3 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(10, 25, 47, 0.1);">
-                    <i class="fa-solid fa-clock text-navy" style="color: var(--navy-dark);"></i>
+                    <i class="fa-solid fa-clock text-navy"></i>
                 </div>
                 <div>
-                    <h3 class="stat-number fw-bold mb-0" style="color: var(--navy-dark);">18</h3>
+                    <h3 class="stat-number fw-bold mb-0 text-navy">18</h3>
                     <small class="text-muted">Jam Belajar</small>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card delay-4">
+        <div class="stat-card delay-4 shadow-sm">
             <div class="d-flex align-items-center">
                 <div class="rounded-circle p-3 me-3" style="background: rgba(100, 255, 218, 0.1);">
-                    <i class="fa-solid fa-certificate text-accent" style="color: var(--accent-blue);"></i>
+                    <i class="fa-solid fa-certificate text-accent"></i>
                 </div>
                 <div>
-                    <h3 class="stat-number fw-bold mb-0" style="color: var(--navy-dark);">
+                    <h3 class="stat-number fw-bold mb-0 text-navy">
                         {{ $userEnrollments->where('status', 'completed')->count() }}
                     </h3>
                     <small class="text-muted">Sertifikat</small>
@@ -146,46 +90,84 @@ $userEnrollments = DB::table('course_enrollments')
     </div>
 </div>
 
-<!-- KURSUS AKTIF -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="navy-card delay-2">
+            <div class="navy-card-header bg-navy border-0">
+                {{-- Header menggunakan warna yang sama dengan tombol --}}
+                <h5 class="mb-0 fw-bold text-accent">
+                    <i class="fa-solid fa-school me-2"></i> Instansi Sekolah
+                </h5>
+            </div>
+            <div class="navy-card-body">
+                @if(Auth::user()->school_id)
+                    <div class="d-flex align-items-center p-3 border rounded-3 bg-light shadow-sm">
+                        <div class="rounded-circle bg-navy p-3 me-3 text-white">
+                            <i class="fa-solid fa-building-columns text-accent"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-navy">{{ Auth::user()->school->name }}</h6>
+                            <small class="text-muted">Status: Siswa Aktif</small>
+                        </div>
+                        <div class="ms-auto">
+                            <button class="btn btn-sm btn-outline-navy" onclick="toggleJoinForm()">
+                                <i class="fa-solid fa-exchange-alt me-1"></i> Ganti Kode
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                <div id="joinForm" class="{{ Auth::user()->school_id ? 'd-none mt-4' : '' }}">
+                    <p class="text-muted small mb-3">Masukkan <strong>Token Sekolah</strong> untuk terhubung dengan instansi Anda.</p>
+                    <form action="{{ route('user.join_school') }}" method="POST">
+                        @csrf
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fa-solid fa-key text-accent"></i>
+                            </span>
+                            <input type="text" name="token_code" class="form-control border-start-0 shadow-none" placeholder="Masukkan Kode Unik Sekolah" required>
+                            <button type="submit" class="btn btn-navy px-4">Gabung Sekarang</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if($userEnrollments->count() > 0)
 <div class="row g-4 mb-5">
     <div class="col-12">
         <div class="navy-card delay-1">
-            <div class="navy-card-header">
-                <h5 class="mb-0 fw-bold">
-                    <i class="fa-solid fa-play-circle me-2"></i>
-                    Kursus yang Sedang Dipelajari
+            <div class="navy-card-header bg-navy border-0">
+                <h5 class="mb-0 fw-bold text-accent">
+                    <i class="fa-solid fa-play-circle me-2"></i> Kursus yang Sedang Dipelajari
                 </h5>
             </div>
             <div class="navy-card-body">
                 <div class="row g-4">
                     @foreach($userEnrollments as $enrollment)
-                        @php
-                            $course = DB::table('courses')->where('id', $enrollment->course_id)->first();
-                        @endphp
+                        @php $course = DB::table('courses')->where('id', $enrollment->course_id)->first(); @endphp
                         @if($course && $enrollment->status !== 'completed')
                         <div class="col-md-6">
-                            <div class="border rounded-3 p-4 h-100">
+                            <div class="border rounded-3 p-4 h-100 transition-card">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
-                                        <span class="badge badge-navy mb-2">{{ $course->category ?? 'Course' }}</span>
-                                        <h6 class="fw-bold mb-1">{{ $course->title }}</h6>
-                                        <small class="text-muted">Level: {{ $course->level ?? 'Basic' }}</small>
+                                        <span class="badge badge-navy mb-2 text-uppercase">{{ $course->level ?? 'Course' }}</span>
+                                        <h6 class="fw-bold mb-1 text-navy">{{ $course->title }}</h6>
                                     </div>
                                     <i class="fa-solid fa-code text-accent fa-lg"></i>
                                 </div>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
                                         <small class="text-muted">Progress</small>
-                                        <small class="fw-bold" style="color: var(--navy-dark);">{{ $enrollment->progress_percentage }}%</small>
+                                        <small class="fw-bold text-navy">{{ $enrollment->progress_percentage }}%</small>
                                     </div>
                                     <div class="progress-navy">
                                         <div class="progress-bar-navy" data-width="{{ $enrollment->progress_percentage }}"></div>
                                     </div>
                                 </div>
-                                <a href="{{ route('user.courses.show', $course->slug) }}" class="btn btn-navy w-100">
-                                    <i class="fa-solid fa-play me-2"></i> Lanjutkan Belajar
-                                </a>
+                                <a href="{{ route('user.courses.show', $course->slug) }}" class="btn btn-navy w-100">Lanjutkan Belajar</a>
                             </div>
                         </div>
                         @endif
@@ -198,62 +180,60 @@ $userEnrollments = DB::table('course_enrollments')
 @endif
 
 <style>
+    :root {
+        --navy-dark: #0a192f;
+        --accent-blue: #64ffda;
+    }
+    
+    /* Utility Classes */
     .text-navy { color: var(--navy-dark) !important; }
     .text-accent { color: var(--accent-blue) !important; }
+    .bg-navy { background-color: var(--navy-dark) !important; }
     
-    .stat-card {
-        animation: slide-in-up 0.6s ease-out;
-        animation-fill-mode: both;
+    /* Buttons */
+    .btn-navy { background-color: var(--navy-dark); color: var(--accent-blue); border: none; transition: 0.3s; }
+    .btn-navy:hover { background-color: #172a45; color: var(--accent-blue); transform: translateY(-2px); }
+    .btn-outline-navy { border: 1px solid var(--navy-dark); color: var(--navy-dark); background: transparent; }
+    .btn-outline-navy:hover { background: var(--navy-dark); color: var(--accent-blue); }
+
+    /* Cards */
+    .stat-card { background: white; border-radius: 12px; padding: 1.5rem; transition: 0.3s; }
+    .navy-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.05); overflow: hidden; }
+    
+    /* Header Styling Baru */
+    .navy-card-header { 
+        padding: 1.2rem 1.5rem; 
+        background-color: var(--navy-dark); /* Mengikuti warna tombol */
     }
+
+    .navy-card-body { padding: 1.5rem; }
+
+    /* Progress Bar */
+    .progress-navy { height: 8px; background: #e9ecef; border-radius: 10px; }
+    .progress-bar-navy { height: 100%; background: var(--navy-dark); border-radius: 10px; transition: width 1s ease-in-out; }
+
+    .badge-navy { background: var(--navy-dark); color: var(--accent-blue); }
     
-    .border {
-        border-color: rgba(10, 25, 47, 0.1) !important;
-        transition: all 0.3s ease;
-    }
-    
-    .border:hover {
+    .transition-card:hover {
         border-color: var(--accent-blue) !important;
-        box-shadow: 0 5px 15px rgba(10, 25, 47, 0.1);
-    }
-    
-    .btn-outline-navy {
-        border: 1px solid var(--navy-dark);
-        color: var(--navy-dark);
-        background: transparent;
-    }
-    
-    .btn-outline-navy:hover {
-        background: var(--navy-dark);
-        color: white;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(10, 25, 47, 0.1);
     }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const animatedElements = document.querySelectorAll('.navy-card, .stat-card');
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
+        const progressBars = document.querySelectorAll('.progress-bar-navy');
+        setTimeout(() => {
+            progressBars.forEach(bar => {
+                bar.style.width = bar.getAttribute('data-width') + '%';
             });
-        }, { threshold: 0.1 });
-        
-        animatedElements.forEach(element => {
-            element.style.opacity = '0';
-            element.style.transform = 'translateY(20px)';
-            element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(element);
-        });
-        
-        const progressBars = document.querySelectorAll('.progress-bar-navy')
-        progressBars.forEach(bar => {
-            const width = bar.getAttribute('data-width')
-            bar.style.width = width + '%'
-        });
+        }, 300);
     });
-</script>
 
+    function toggleJoinForm() {
+        const form = document.getElementById('joinForm');
+        form.classList.toggle('d-none');
+    }
+</script>
 @endsection

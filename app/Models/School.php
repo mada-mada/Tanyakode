@@ -23,4 +23,9 @@ class School extends Model
     protected $casts = [
         'is_token_active' => 'boolean',
     ];
+    public function users()
+      {
+     // Mengacu pada tabel users yang memiliki kolom school_id
+    return $this->hasMany(User::class, 'school_id');
+        }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\user;
 use Laravel\Sanctum\HasApiTokens;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\School;
 
 class UserController extends Controller
 {
@@ -111,4 +112,29 @@ class UserController extends Controller
     // ... logika ambil materi/modul ...
     return view('user.courses.learning', compact('course'));
   }
+  public function joinSchool(Request $request) {
+    $request->validate([
+        'token_code' => 'required|string'
+    ]);
+
+    // 1. Cari sekolah berdasarkan kode yang diinput
+    $school = School::where('token_code', $request->token_code)
+                    ->where('is_token_active', 1)
+                    ->first();
+
+    if (!$school) {
+        return back()->with('error', 'Kode sekolah tidak valid atau sudah tidak aktif.');
+    }
+
+    // 2. Update school_id milik user yang sedang login
+    $user = auth()->user();
+    $user->update([
+        'school_id' => $school->id
+    ]);
+
+    return back()->with('success', 'Berhasil bergabung dengan ' . $school->name);
 }
+
+}
+
+

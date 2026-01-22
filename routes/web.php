@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\user\UserController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\superadmin\Superadmincontroller;
 use App\Http\Controllers\superadmin\Adminsekolahcontroller;
@@ -11,7 +11,7 @@ use App\Http\Controllers\superadmin\Superadmin_sekolahcontroller;
 use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\SpinGameController;
 use App\Http\Controllers\User\UserCourseController;
-
+use App\Http\Controllers\Adminsekolah\SchoolTokenController;
 // --- IMPORT ADMIN GENERAL (JANGAN DIHAPUS) ---
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\ModuleController;
@@ -85,11 +85,13 @@ Route::middleware(['auth'])->group(function() {
             Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
             Route::get('/courses', [UserCourseController::class, 'index'])->name('courses.index');
             Route::get('/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
-           Route::get('/course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');
+            Route::get('/course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');
             Route::get('/catalog', [UserCourseController::class, 'catalog'])->name('courses.catalog');
 
             Route::get('/spin-wheel', [SpinGameController::class, 'index'])->name('spin');
             Route::post('/spin-wheel-process', [SpinGameController::class, 'spinProcess'])->name('spin.process');
+
+            Route::post('/join-school', [UserController::class, 'joinSchool'])->name('join_school');
             
             // Payment
             Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
@@ -109,6 +111,7 @@ Route::middleware(['auth'])->group(function() {
         Route::middleware(['role:school_admin'])->prefix('schooladmin')->name('school_admin.')->group(function () {
             // Gunakan Controller Admin Sekolah
             Route::get('/dashboard', [AdminSekolahCourseController::class, 'dashboard'])->name('dashboard');
+            Route::post('/generate-token', [SchoolTokenController::class, 'generate'])->name('generate_token');
         });
 
         // 5. SHARED CRUD (Dikelola oleh AdminSekolah Controllers karena sudah mendukung Multitenancy)

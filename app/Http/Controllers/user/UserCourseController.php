@@ -11,22 +11,39 @@ use App\Models\Module;
 use App\Models\ModuleContent;
 class UserCourseController extends Controller
 {
-    public function index()
-    {
-        $userId = Auth::id();
+   public function index()
+{
+    $user = Auth::user();
+    $userId = $user->id;
 
-        $courses = DB::table('course_enrollments')
-            ->join('courses', 'courses.id', '=', 'course_enrollments.course_id')
-            ->where('course_enrollments.user_id', $userId)
-            ->select(
-                'courses.*',
-                'course_enrollments.progress_percentage',
-                'course_enrollments.status'
-            )
-            ->get();
+    // Mulai query dengan join ke tabel courses
+    $query = DB::table('course_enrollments')
+        ->join('courses', 'courses.id', '=', 'course_enrollments.course_id')
+        ->where('course_enrollments.user_id', $userId);
 
-        return view('user.courses.index', compact('courses'));
+    // 1. LOGIKA FILTER SCHOOL_ID (Hanya tampilkan kursus yang diizinkan)
+    if (!$user->school_id) {
+        // Jika user tidak punya sekolah, hanya ambil kursus umum (school_id NULL)
+        $query->whereNull('courses.school_id');
+    } else {
+        // Jika user punya sekolah, ambil yang umum (NULL) ATAU yang sesuai sekolahnya
+        $query->where(function($q) use ($user) {
+            $q->whereNull('courses.school_id')
+              ->orWhere('courses.school_id', $user->school_id);
+        });
     }
+
+    // 2. Pilih kolom yang ingin ditampilkan
+    $courses = $query->select(
+            'courses.*',
+            'course_enrollments.progress_percentage',
+            'course_enrollments.status'
+        )
+        ->latest('course_enrollments.created_at')
+        ->get();
+
+    return view('user.courses.index', compact('courses'));
+}
 
     public function show($slug)
     {
@@ -125,22 +142,34 @@ class UserCourseController extends Controller
     ]);
 }
 
-    public function catalog(Request $request)
+   public function catalog(Request $request)
 {
-    // Mulai query dari model Course
+    $user = Auth::user();
     $query = Course::query();
 
-    // 1. Logika Search (Berdasarkan nama course)
-    if ($request->has('search') && $request->search != '') {
+    // 1. LOGIKA FILTER SCHOOL_ID (KEAMANAN DATA)
+    if (!$user->school_id) {
+        // Jika user tidak punya sekolah, hanya tampilkan kursus yang school_id-nya NULL
+        $query->whereNull('school_id');
+    } else {
+        // Jika user punya sekolah, tampilkan yang NULL (umum) ATAU yang sesuai school_id user
+        $query->where(function($q) use ($user) {
+            $q->whereNull('school_id')
+              ->orWhere('school_id', $user->school_id);
+        });
+    }
+
+    // 2. Logika Search (Berdasarkan nama/title course)
+    if ($request->filled('search')) {
         $query->where('title', 'like', '%' . $request->search . '%');
     }
 
-    // 2. Logika Filter Level (Berdasarkan parameter 'level' di URL)
-    if ($request->has('level') && $request->level != 'Semua') {
+    // 3. Logika Filter Level
+    if ($request->filled('level') && $request->level != 'Semua') {
         $query->where('level', $request->level);
     }
 
-    // Ambil data (menggunakan pagination agar rapi jika data banyak)
+    // Ambil data dengan pagination
     $courses = $query->latest()->paginate(9)->withQueryString();
 
     return view('user.courses.catalog', compact('courses'));

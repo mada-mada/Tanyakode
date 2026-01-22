@@ -107,7 +107,7 @@
                                 </span>
                             </div>
                             
-                            <a href="{{ route('user.courses.show', $course->id) }}" class="btn btn-start w-100 py-3">
+                            <a href="{{ route('user.courses.show', $course->slug) }}" class="btn btn-start w-100 py-3">
                                 Lihat Detail <i class="fas fa-arrow-right ms-2"></i>
                             </a>
                         </div>
