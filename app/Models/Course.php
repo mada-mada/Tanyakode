@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Module;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
@@ -53,4 +53,9 @@ public function enrollments()
         return $this->hasMany(CourseEnrollment::class, 'course_id');
     }
     
+    public function orders(): HasMany
+    {
+        // Pastikan kamu sudah memiliki model Order
+        return $this->hasMany(Order::class);
+    }
 }

@@ -20,19 +20,10 @@ class UserController extends Controller
     public function show(Request $request)
     {
         $user = Auth::user();
-        $user->load('school'); // Memuat relasi sekolah
+        $user->load('school'); // Memuat data sekolah jika ada
 
+        // Mengarah ke resources/views/user/profiles/show.blade.php
         return view('user.profiles.show', compact('user'));
-    }
-
-    /**
-     * Menampilkan halaman edit profil
-     */
-    public function edit()
-    {
-        $user = Auth::user();
-        
-        return view('user.profiles.edit', compact('user'));
     }
 
     /**
@@ -42,21 +33,19 @@ class UserController extends Controller
     {
         $student = Auth::user();
 
-        // Validasi data sesuai dengan field di edit.blade.php dan struktur tabel users
         $request->validate([
-            'full_name'       => 'required|string|max:100',
-            'domisili'        => 'nullable|string|max:100',
-            'grade'           => ['nullable', Rule::in(['1', '2', '3'])], // Validasi enum sesuai DB
-            'school_category' => ['nullable', Rule::in(['SMP', 'SMA'])], // Validasi enum sesuai DB
-            'username'        => ['required', 'string', 'max:50', Rule::unique('users')->ignore($student->id)],
-            'email'           => ['required', 'email', 'max:100', Rule::unique('users')->ignore($student->id)],
-            'nis'             => ['nullable', 'string', Rule::unique('users')->ignore($student->id)],
-            'nisn'            => ['nullable', 'string', Rule::unique('users')->ignore($student->id)],
-            'password'        => 'nullable|string|min:8',
-            'avatar'          => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'full_name' => 'required|string|max:100',
+            'domisili'  => 'nullable|string|max:100',
+            'grade'     => ['nullable', Rule::in(['1', '2', '3'])],
+            'school_category' => ['nullable', Rule::in(['SMP', 'SMA'])],
+            'username'  => ['required', 'string', 'max:50', Rule::unique('users')->ignore($student->id)],
+            'email'     => ['required', 'email', 'max:100', Rule::unique('users')->ignore($student->id)],
+            'nis'       => ['nullable', 'string', Rule::unique('users')->ignore($student->id)],
+            'nisn'      => ['nullable', 'string', Rule::unique('users')->ignore($student->id)],
+            'password'  => 'nullable|string|min:8',
+            'avatar'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Mengisi data objek student dengan data dari request
         $student->full_name       = $request->full_name;
         $student->username        = $request->username;
         $student->email           = $request->email;
@@ -66,27 +55,22 @@ class UserController extends Controller
         $student->nis             = $request->nis;
         $student->nisn            = $request->nisn;
 
-        // Hash password jika kolom diisi
         if ($request->filled('password')) {
             $student->password = Hash::make($request->password);
         }
 
-        // Logika upload avatar
         if ($request->hasFile('avatar')) {
-            // Hapus file lama di storage jika ada
             if ($student->avatar_url && Storage::disk('public')->exists($student->avatar_url)) {
                 Storage::disk('public')->delete($student->avatar_url);
             }
-            
-            // Simpan file baru ke folder avatars/students
             $path = $request->file('avatar')->store('avatars/students', 'public');
             $student->avatar_url = $path;
         }
 
         $student->save();
 
-        // Alihkan ke halaman show profil dengan pesan sukses
-        return redirect()->route('user.profiles.show')->with('success', 'Profil Anda berhasil diperbarui.');
+        // Mengalihkan kembali dengan pesan sukses
+        return redirect()->back()->with('success', 'Profil Anda berhasil diperbarui.');
     }
 
     /**
@@ -128,4 +112,12 @@ class UserController extends Controller
 
         return back()->with('success', 'Berhasil bergabung dengan ' . $school->name);
     }
+
+    public function edit()
+{
+    $user = Auth::user(); // Ambil data user yang login
+    
+    // Pastikan path view sesuai dengan nama folder Anda (user.profiles.edit)
+    return view('user.profiles.edit', compact('user'));
+}
 }

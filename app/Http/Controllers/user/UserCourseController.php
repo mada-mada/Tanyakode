@@ -7,171 +7,181 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Course;
-use App\Models\Module;
 use App\Models\ModuleContent;
+
 class UserCourseController extends Controller
 {
-   public function index()
-{
-    $user = Auth::user();
-    $userId = $user->id;
+    /**
+     * Menampilkan daftar kursus milik user (Terbeli atau Terdaftar)
+     */
+    public function index()
+    {
+        $user = Auth::user();
+        $userId = $user->id;
 
-    // Mulai query dengan join ke tabel courses
-    $query = DB::table('course_enrollments')
-        ->join('courses', 'courses.id', '=', 'course_enrollments.course_id')
-        ->where('course_enrollments.user_id', $userId);
+        // Ambil kursus yang sudah dibayar (status settlement di tabel transactions)
+        // ATAU kursus yang user sudah terdaftar di course_enrollments
+        $courses = Course::whereHas('orders', function($q) use ($userId) {
+                $q->where('user_id', $userId)->where('payment_status', 'settlement');
+            })
+            ->orWhereHas('enrollments', function($q) use ($userId) {
+                $q->where('user_id', $userId);
+            })
+            ->when($user->school_id, function($query) use ($user) {
+                // Jika user punya sekolah, filter juga berdasarkan akses sekolah
+                return $query->where(function($q) use ($user) {
+                    $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+                });
+            }, function($query) {
+                // Jika tidak punya sekolah, hanya ambil yang umum
+                return $query->whereNull('school_id');
+            })
+            ->get();
 
-    // 1. LOGIKA FILTER SCHOOL_ID (Hanya tampilkan kursus yang diizinkan)
-    if (!$user->school_id) {
-        // Jika user tidak punya sekolah, hanya ambil kursus umum (school_id NULL)
-        $query->whereNull('courses.school_id');
-    } else {
-        // Jika user punya sekolah, ambil yang umum (NULL) ATAU yang sesuai sekolahnya
-        $query->where(function($q) use ($user) {
-            $q->whereNull('courses.school_id')
-              ->orWhere('courses.school_id', $user->school_id);
-        });
+        return view('user.courses.index', compact('courses'));
     }
 
-    // 2. Pilih kolom yang ingin ditampilkan
-    $courses = $query->select(
-            'courses.*',
-            'course_enrollments.progress_percentage',
-            'course_enrollments.status'
-        )
-        ->latest('course_enrollments.created_at')
-        ->get();
-
-    return view('user.courses.index', compact('courses'));
-}
-
+    /**
+     * Detail Kursus
+     */
     public function show($slug)
     {
         $userId = Auth::id();
+        $course = Course::where('slug', $slug)->with(['modules.contents'])->firstOrFail();
 
-        // 1. Ambil data course dengan module dan contents-nya
-        $course = Course::where('slug', $slug)
-            ->with(['modules.contents'])
-            ->firstOrFail();
-
-        // 2. Hitung Total Konten (Solusi Error: Undefined variable $totalContent)
-        // Kita menjumlahkan semua content yang ada di dalam setiap module
+        // Hitung total materi
         $totalContent = $course->modules->sum(function ($module) {
             return $module->contents->count();
         });
 
-        // 3. Cek apakah user sudah terdaftar/beli
-        $isEnrolled = $course->enrollments()->where('user_id', $userId)->exists();
+        // Cek Pembayaran di tabel TRANSACTIONS (Bukan orders)
+        $isPaid = DB::table('transactions')
+                    ->where('user_id', $userId)
+                    ->where('course_id', $course->id)
+                    ->where('payment_status', 'settlement')
+                    ->exists();
 
-        // 4. Kirim semua variabel ke View
-        return view('user.courses.show', compact('course', 'isEnrolled', 'totalContent'));
+        // Cek Pendaftaran Progres
+        $isEnrolled = DB::table('course_enrollments')
+                        ->where('user_id', $userId)
+                        ->where('course_id', $course->id)
+                        ->exists();
+
+        // User punya akses jika sudah bayar ATAU sudah terdaftar (gratis)
+        $hasAccess = $isPaid || $isEnrolled;
+
+        return view('user.courses.show', [
+            'course' => $course,
+            'isEnrolled' => $hasAccess, 
+            'totalContent' => $totalContent
+        ]);
     }
 
+    /**
+     * Ruang Belajar (Learning Room)
+     */
    public function learning($slug, $contentId = null)
 {
-    $course = Course::with(['modules' => function($q) {
-        $q->orderBy('id', 'asc');
-    }, 'modules.contents' => function($q) {
-        $q->orderBy('id', 'asc');
-    }])
-    ->where(function($query) use ($slug) {
-        $query->where('slug', $slug)->orWhere('id', $slug);
-    })
-    ->firstOrFail();
-
+    // 1. Cari Course
+    $course = Course::with(['modules.contents'])->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
     $userId = Auth::id();
+
+    // 2. VALIDASI PEMBAYARAN (Gunakan tabel 'transactions' sesuai database Anda)
+    $isPaid = DB::table('transactions')
+                ->where('user_id', $userId)
+                ->where('course_id', $course->id)
+                ->where('payment_status', 'settlement')
+                ->exists();
+
+    // 3. JIKA BELUM BAYAR (Hanya untuk kursus berbayar)
+    if ($course->price > 0 && !$isPaid) {
+        return redirect()->route('user.courses.show', $course->slug)
+                         ->with('error', 'Akses ditolak: Status pembayaran belum lunas (Settlement).');
+    }
+
+    // 4. LOGIKA ENROLLMENT (Pastikan data ada di tabel course_enrollments)
     $enrollment = DB::table('course_enrollments')
                     ->where('user_id', $userId)
                     ->where('course_id', $course->id)
                     ->first();
 
-    // Auto-Enroll jika belum ada
     if (!$enrollment) {
         $enrollmentId = DB::table('course_enrollments')->insertGetId([
             'user_id' => $userId,
             'course_id' => $course->id,
             'status' => 'active',
-            'last_content_id' => null,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
         $enrollment = DB::table('course_enrollments')->where('id', $enrollmentId)->first();
     }
 
+    // 5. TENTUKAN MATERI YANG DITAMPILKAN
     $activeContent = null;
     if ($contentId) {
-        // Prioritas 1: Sesuai ID yang diklik di sidebar/tombol next
-        $activeContent = ModuleContent::find($contentId);
+        $activeContent = \App\Models\ModuleContent::find($contentId);
     } else {
-        // Prioritas 2: Resume dari database jika baru masuk
-        if ($enrollment->last_content_id) {
-            $activeContent = ModuleContent::find($enrollment->last_content_id);
+        // Coba resume dari materi terakhir yang dibuka
+        if (!empty($enrollment->last_content_id)) {
+            $activeContent = \App\Models\ModuleContent::find($enrollment->last_content_id);
         }
-        // Prioritas 3: Materi pertama jika semuanya kosong
+        
+        // Jika belum pernah buka sama sekali, ambil materi PERTAMA
         if (!$activeContent) {
-            $firstModule = $course->modules->first();
-            $activeContent = $firstModule ? $firstModule->contents->first() : null;
+            $firstModule = $course->modules->sortBy('id')->first();
+            if ($firstModule) {
+                $activeContent = $firstModule->contents->sortBy('id')->first();
+            }
         }
     }
 
+    // CEK: Jika kursus ternyata kosong (belum ada materi)
     if (!$activeContent) {
-        return redirect()->route('user.courses.show', $course->slug)->with('error', 'Materi tidak ditemukan.');
+        return redirect()->route('user.courses.show', $course->slug)
+                         ->with('error', 'Kursus ini belum memiliki materi untuk dipelajari.');
     }
 
-    // Update progress terakhir di DB
+    // 6. SIMPAN PROGRESS TERAKHIR
     DB::table('course_enrollments')
         ->where('id', $enrollment->id)
-        ->update(['last_content_id' => $activeContent->id, 'updated_at' => now()]);
-
-    // Logika Auto-Complete (Cek materi terakhir)
-    $lastModule = $course->modules->last();
-    if ($lastModule) {
-        $lastContentOfCourse = $lastModule->contents->last();
-        if ($lastContentOfCourse && $activeContent->id == $lastContentOfCourse->id) {
-            DB::table('course_enrollments')->where('id', $enrollment->id)->update(['status' => 'completed']);
-            $enrollment->status = 'completed';
-        }
-    }
-
-    $isCompleted = ($enrollment->status == 'completed' || $enrollment->status == 1);
+        ->update([
+            'last_content_id' => $activeContent->id,
+            'updated_at' => now()
+        ]);
 
     return view('user.courses.learning', [
         'course' => $course,
         'activeContent' => $activeContent,
-        'isCompleted' => $isCompleted
+        'isCompleted' => ($enrollment->status === 'completed')
     ]);
 }
 
-   public function catalog(Request $request)
-{
-    $user = Auth::user();
-    $query = Course::query();
+    /**
+     * Katalog Kursus
+     */
+    public function catalog(Request $request)
+    {
+        $user = Auth::user();
+        $query = Course::query();
 
-    // 1. LOGIKA FILTER SCHOOL_ID (KEAMANAN DATA)
-    if (!$user->school_id) {
-        // Jika user tidak punya sekolah, hanya tampilkan kursus yang school_id-nya NULL
-        $query->whereNull('school_id');
-    } else {
-        // Jika user punya sekolah, tampilkan yang NULL (umum) ATAU yang sesuai school_id user
-        $query->where(function($q) use ($user) {
-            $q->whereNull('school_id')
-              ->orWhere('school_id', $user->school_id);
-        });
+        // Filter berdasarkan sekolah
+        if (!$user->school_id) {
+            $query->whereNull('school_id');
+        } else {
+            $query->where(function($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('level') && $request->level != 'Semua') {
+            $query->where('level', $request->level);
+        }
+
+        $courses = $query->latest()->paginate(9)->withQueryString();
+        return view('user.courses.catalog', compact('courses'));
     }
-
-    // 2. Logika Search (Berdasarkan nama/title course)
-    if ($request->filled('search')) {
-        $query->where('title', 'like', '%' . $request->search . '%');
-    }
-
-    // 3. Logika Filter Level
-    if ($request->filled('level') && $request->level != 'Semua') {
-        $query->where('level', $request->level);
-    }
-
-    // Ambil data dengan pagination
-    $courses = $query->latest()->paginate(9)->withQueryString();
-
-    return view('user.courses.catalog', compact('courses'));
-}
 }

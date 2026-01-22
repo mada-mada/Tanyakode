@@ -132,7 +132,7 @@ class PaymentController extends Controller
         }
         
         DB::commit();
-        return response()->json(['status' => 'free', 'redirect_url' => route('user.payment.success')]);
+        return response()->json(['status' => 'free', 'redirect_url' => route('user.courses.show', $course->slug)]);
 
     } catch (\Exception $e) {
         DB::rollBack();

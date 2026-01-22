@@ -87,7 +87,7 @@ Route::middleware(['auth'])->group(function() {
             Route::put('/profile/update', [UserController::class, 'update'])->name('profiles.update');
 
             Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
-            Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
+            Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);   
             Route::get('/courses', [UserCourseController::class, 'index'])->name('courses.index');
             Route::get('/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
             Route::get('/course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');
