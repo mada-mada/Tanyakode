@@ -43,7 +43,7 @@
             <div class="absolute bottom-[-50px] left-[-50px] w-64 h-64 bg-brand-blue rounded-full blur-[80px] opacity-50"></div>
 
             <div class="relative z-10">
-                <a href="/" class="flex items-center gap-3 mb-6 hover:opacity-80 transition">
+                <a href="{{ url('/') }}" class="flex items-center gap-3 mb-6 hover:opacity-80 transition">
                     <div class="h-10 w-10 bg-brand-blue rounded flex items-center justify-center font-bold text-xl">T</div>
                     <span class="text-2xl font-bold tracking-wide">
                         <span class="text-white">TANYA</span><span class="text-brand-sky">KODE</span>
@@ -65,7 +65,7 @@
 
         <div class="w-full md:w-1/2 bg-white flex flex-col justify-start p-8 md:p-12 pt-24 md:pt-20 overflow-y-auto relative">
 
-            <a href="/" class="md:hidden text-gray-500 mb-6 flex items-center text-sm hover:text-brand-blue transition absolute top-6 left-6">
+            <a href="{{ url('/') }}" class="md:hidden text-gray-500 mb-6 flex items-center text-sm hover:text-brand-blue transition absolute top-6 left-6">
                 <i class="fas fa-arrow-left mr-2"></i> Kembali
             </a>
 

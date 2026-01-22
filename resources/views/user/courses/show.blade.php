@@ -256,7 +256,7 @@
 
                         {{-- Thumbnail --}}
                         <div class="thumbnail-box shadow-sm">
-                            @if (!empty($course->cover) && file_exists(storage_path('app/public/' . $course->cover)))
+                            @if (!empty($course->cover) && file_exists(storage_path('app/public/' . basename($course->cover))))
                                 <img src="{{ asset('storage/' . $course->cover) }}" alt="{{ $course->title }}">
                             @else
                                 <div class="thumbnail-placeholder"><i class="fas fa-laptop-code"></i></div>

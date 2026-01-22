@@ -91,7 +91,7 @@
     </span>
 
     {{-- LOGIKA MENAMPILKAN GAMBAR (MENGGUNAKAN thumbnail_url) --}}
-    @if($course->thumbnail_url && file_exists(public_path('storage/' . $course->thumbnail_url)))
+    @if($course->thumbnail_url && file_exists(public_path('storage/' . basename($course->thumbnail_url))))
         <img src="{{ asset('storage/' . $course->thumbnail_url) }}" 
              alt="{{ $courseName }}" 
              class="w-100 h-100 position-absolute top-0 start-0" 

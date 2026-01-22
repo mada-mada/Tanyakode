@@ -31,7 +31,7 @@
             <div class="absolute bottom-[-50px] left-[-50px] w-64 h-64 bg-brand-blue rounded-full blur-[80px] opacity-50"></div>
 
             <div class="relative z-10">
-                <a href="/" class="flex items-center gap-3 mb-6 hover:opacity-80 transition">
+                <a href="{{ url('/') }}" class="flex items-center gap-3 mb-6 hover:opacity-80 transition">
                     <div class="h-10 w-10 bg-brand-blue rounded flex items-center justify-center font-bold text-xl">T</div>
                     <span class="text-2xl font-bold tracking-wide">
                         <span class="text-white">TANYA</span><span class="text-brand-sky">KODE</span>
