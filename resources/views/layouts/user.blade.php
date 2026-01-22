@@ -140,7 +140,7 @@
             </div>
 
             <div class="nav-item {{ Route::is('user.profiles.*') ? 'active' : '' }}">
-                <a href="{{ route('user.profiles.show') }}">
+                <a href="{{ route('user.profiles.show', auth()->id()) }}">
                     <i class="fa-solid fa-user"></i>
                     <span>Profil</span>
                 </a>

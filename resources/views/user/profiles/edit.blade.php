@@ -13,7 +13,7 @@
                     </h5>
                 </div>
                 <div class="navy-card-body">
-                    <form action="{{ route('user.profiles.update') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('user.profiles.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -81,7 +81,7 @@
                                     <button type="submit" class="btn btn-navy px-4">
                                         <i class="fa-solid fa-save me-2"></i>Simpan Perubahan
                                     </button>
-                                    <a href="{{ route('user.profiles.show') }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('user.profiles.show', $user->id) }}" class="btn btn-outline-secondary">
                                         Batal
                                     </a>
                                 </div>
