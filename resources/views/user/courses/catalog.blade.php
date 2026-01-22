@@ -19,6 +19,17 @@
     .filter-btn { border: 1px solid #e2e8f0; color: #64748b; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; background: white; transition: all 0.2s; text-decoration: none; display: inline-block; }
     .filter-btn:hover { background-color: #f1f5f9; color: #0B132B; text-decoration: none; }
     .filter-btn.active { background-color: #0B132B; color: white; border-color: #0B132B; }
+
+    /* Tambahan untuk merapikan gambar */
+    .course-thumbnail {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .card-custom:hover .course-thumbnail {
+        transform: scale(1.05);
+    }
 </style>
 
 <div class="container-fluid p-4">
@@ -53,16 +64,13 @@
     <div class="row">
         @forelse($courses as $course)
             @php
-                // GENERATE INISIAL DARI NAMA COURSE (Misal: "Web Design" -> "WD")
-                // Menggunakan 'name' sesuai asumsi tabel DB, ubah ke 'title' jika kolom di DB anda 'title'
-                $courseName = $course->name ?? $course->title; 
+                $courseName = $course->title ?? $course->name; 
                 $words = explode(' ', $courseName);
                 $initials = '';
                 foreach($words as $i => $word) {
                     if($i < 2) $initials .= strtoupper(substr($word, 0, 1));
                 }
 
-                // CONFIG WARNA BADGE BERDASARKAN LEVEL
                 $levelConfig = match(strtolower($course->level ?? 'general')) {
                     'pemula', 'beginner' => ['label' => 'Beginner', 'class' => 'badge-beginner'],
                     'menengah', 'intermediate' => ['label' => 'Intermediate', 'class' => 'badge-intermediate'],
@@ -74,16 +82,21 @@
             <div class="col-12 col-md-6 col-lg-4 mb-4">
                 <div class="card card-custom h-100">
 
-                    <div class="bg-dark-theme p-5 position-relative text-center d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
+                    {{-- BAGIAN GAMBAR/THUMBNAIL --}}
+                    <div class="bg-dark-theme position-relative text-center d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
                         
+                        {{-- Badge Level di Atas Gambar --}}
                         <span class="badge {{ $levelConfig['class'] }} position-absolute shadow-sm" style="top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; z-index: 10;">
                             {{ $levelConfig['label'] }}
                         </span>
 
-                        @if(!empty($course->thumbnail) && file_exists(public_path('storage/'.$course->thumbnail)))
-                            <img src="{{ asset('storage/'.$course->thumbnail) }}" alt="{{ $courseName }}" class="w-100 h-100 position-absolute top-0 start-0" style="object-fit: cover; opacity: 0.8;">
+                        @if($course->thumbnail)
+                            <img src="{{ asset('storage/' . $course->thumbnail) }}" 
+                                 alt="{{ $courseName }}" 
+                                 class="course-thumbnail">
                         @else
-                            <h1 class="text-cyan-theme fw-bold m-0 position-relative" style="font-size: 6rem; z-index: 5; opacity: 0.5;">
+                            {{-- Fallback jika gambar kosong --}}
+                            <h1 class="text-cyan-theme fw-bold m-0 position-relative" style="font-size: 6rem; opacity: 0.4;">
                                 {{ $initials }}
                             </h1>
                         @endif

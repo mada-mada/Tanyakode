@@ -160,28 +160,32 @@ class UserCourseController extends Controller
      * Katalog Kursus
      */
     public function catalog(Request $request)
-    {
-        $user = Auth::user();
-        $query = Course::query();
+{
+    $user = Auth::user();
+    $query = Course::query();
 
-        // Filter berdasarkan sekolah
-        if (!$user->school_id) {
-            $query->whereNull('school_id');
-        } else {
-            $query->where(function($q) use ($user) {
-                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
-            });
+    // 1. FILTER SCHOOL_ID
+    // User tanpa school_id hanya bisa melihat kursus umum (school_id NULL)
+    // User dengan school_id bisa melihat kursus umum DAN kursus sekolahnya
+    $query->where(function($q) use ($user) {
+        $q->whereNull('school_id');
+        if ($user->school_id) {
+            $q->orWhere('school_id', $user->school_id);
         }
+    });
 
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('level') && $request->level != 'Semua') {
-            $query->where('level', $request->level);
-        }
-
-        $courses = $query->latest()->paginate(9)->withQueryString();
-        return view('user.courses.catalog', compact('courses'));
+    // 2. LOGIKA SEARCH
+    if ($request->filled('search')) {
+        $query->where('title', 'like', '%' . $request->search . '%');
     }
+
+    // 3. LOGIKA FILTER LEVEL
+    if ($request->filled('level') && $request->level != 'Semua') {
+        $query->where('level', $request->level);
+    }
+
+    $courses = $query->latest()->paginate(9)->withQueryString();
+    
+    return view('user.courses.catalog', compact('courses'));
+}
 }

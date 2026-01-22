@@ -103,13 +103,39 @@
     <div class="flex flex-1 overflow-hidden">
         <main class="flex-1 flex flex-col bg-[#0b1120] overflow-y-auto custom-scroll relative">
             
-            @if($activeContent->video_url)
-            <div class="w-full bg-black aspect-video max-h-[500px] relative flex items-center justify-center shrink-0 border-b border-gray-800">
-                <iframe src="{{ $activeContent->video_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-            </div>
-            @endif
+          @if($activeContent->video_url)
+    @php
+        $rawUrl = $activeContent->video_url;
+        $videoId = '';
 
-            <div class="px-6 lg:px-10 py-6 max-w-7xl mx-auto w-full">
+        // Fungsi otomatis untuk mengambil 11 karakter ID Video dari berbagai jenis link
+        if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $rawUrl, $match)) {
+            $videoId = $match[1];
+        }
+
+        // Sekarang finalUrl hanya berisi link embed + ID yang bersih
+        $finalUrl = $videoId ? "https://www.youtube-nocookie.com/embed/" . $videoId . "?rel=0&enablejsapi=1" : null;
+    @endphp
+
+    <div class="w-full bg-black aspect-video max-h-[500px] relative flex items-center justify-center shrink-0 border-b border-gray-800">
+        @if($videoId)
+            <iframe 
+                src="{{ $finalUrl }}" 
+                class="w-full h-full" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen>
+            </iframe>
+        @else
+            <div class="text-center p-5 text-gray-500">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <p>Link Video tidak valid.</p>
+            </div>
+        @endif
+    </div>
+@endif
+<div class="px-6 lg:px-10 py-6 max-w-7xl mx-auto w-full">
+
                 <div class="flex border-b border-gray-800 mb-6 sticky top-0 bg-[#0b1120]/95 backdrop-blur z-20 pt-2 gap-8">
                     <button onclick="switchTab('materi')" id="tab-materi" class="tab-btn {{ $tabMateriActive }} pb-3 text-sm font-bold uppercase tracking-wider">Materi</button>
                     <button onclick="switchTab('praktek')" id="tab-praktek" class="tab-btn {{ $tabPraktekActive }} pb-3 text-sm font-bold uppercase tracking-wider">Lab Code</button>
