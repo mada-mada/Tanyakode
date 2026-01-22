@@ -38,7 +38,7 @@ class Adminsekolahcontroller extends Controller
       'full_name' => $request->full_name,
       'username' => $request->username,
       'email' => $request->email,
-      'password' => $request->password, // Biarkan Model yang melakukan hashing otomatis
+      'password' => Hash::make($request->password),
       'role' => 'school_admin',
       'school_id' => $request->school_id,
     ]);

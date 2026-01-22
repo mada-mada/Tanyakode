@@ -19,9 +19,9 @@ use App\Http\Controllers\Admin\ModuleContentController;
 use App\Http\Controllers\ArticleController;
 
 // --- IMPORT ADMIN SEKOLAH ---
-use App\Http\Controllers\AdminSekolah\AdminSekolahCourseController;
-use App\Http\Controllers\AdminSekolah\AdminSekolahModuleController;
-use App\Http\Controllers\AdminSekolah\AdminSekolahModuleContentController;
+use App\Http\Controllers\Adminsekolah\AdminSekolahCourseController;
+use App\Http\Controllers\Adminsekolah\AdminSekolahModuleController;
+use App\Http\Controllers\Adminsekolah\AdminSekolahModuleContentController;
 
 use App\Http\Controllers\User\AllCourseController;
 use App\Http\Middleware\CekUserIsActive;
@@ -99,9 +99,7 @@ Route::middleware(['auth'])->group(function () {
 
       Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
 
-      Route::get('/dashboard', function () {
-        return view('user.dashboard');
-      })->name('dashboard');
+      Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
       Route::get('/courses', [UserCourseController::class, 'index'])->name('courses.index');
       Route::get('/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
       Route::get('/course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');

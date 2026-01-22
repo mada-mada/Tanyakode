@@ -15,6 +15,27 @@ use App\Models\School;
 class UserController extends Controller
 {
   /**
+   * Menampilkan halaman dashboard user
+   */
+  public function dashboard()
+  {
+    $user = Auth::user();
+
+    // Mengambil notifikasi dengan eager loading
+    $notifications = $user->notifications()
+      ->orderBy('created_at', 'desc')
+      ->get();
+
+    // Mengambil enrollments dengan eager loading untuk menghindari N+1
+    $userEnrollments = $user->enrollments()
+      ->with('course')
+      ->orderBy('updated_at', 'desc')
+      ->get();
+
+    return view('user.dashboard', compact('notifications', 'userEnrollments'));
+  }
+
+  /**
    * Menampilkan halaman profil (View Blade)
    */
   public function show(Request $request)

@@ -83,6 +83,15 @@ class Superadmincontroller extends Controller
   public function destroy($id)
   {
     $user = User::findOrFail($id);
+
+    // Jangan izinkan menghapus akun Super Admin atau akun yang sedang login
+    if ($user->role === 'super_admin') {
+      return redirect()->route('superadmin.admin.index')->with('error', 'Tidak dapat menghapus akun Super Admin.');
+    }
+    if (auth()->check() && auth()->id() === $user->id) {
+      return redirect()->route('superadmin.admin.index')->with('error', 'Anda tidak dapat menghapus akun yang sedang Anda gunakan.');
+    }
+
     $user->delete();
     return redirect()->route('superadmin.admin.index')->with('success', 'Admin berhasil dihapus');
   }
