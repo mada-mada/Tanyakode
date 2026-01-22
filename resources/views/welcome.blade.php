@@ -23,7 +23,7 @@
             --gradient-2: linear-gradient(135deg, #7209b7, #4361ee);
             --gradient-3: linear-gradient(135deg, #4cc9f0, #4895ef);
             --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 8px 15px rgba(0, git remote add origin https://github.com/mada-mada/Tanyakode.git0, 0, 0.1);
             --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.15);
             --radius: 12px;
             --radius-lg: 20px;
@@ -101,22 +101,14 @@
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
             text-decoration: none;
         }
 
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--gradient-1);
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 1.5rem;
-            box-shadow: var(--shadow-md);
+        .logo-img {
+            height: 50px;       /* Mengatur tinggi logo di menu atas */
+            width: auto;        /* Lebar menyesuaikan agar tidak gepeng */
+            margin-right: 1px; /* Memberi jarak antara logo dan teks TanyaKode */
+            object-fit: contain;
         }
 
         .logo-text {
@@ -842,21 +834,15 @@
         .footer-logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 5px;
             margin-bottom: 25px;
         }
 
-        .footer-logo-icon {
-            width: 50px;
-            height: 50px;
-            background: white;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-weight: 800;
-            font-size: 1.5rem;
+        .footer-logo-img {
+            height: 50px;       /* Mengatur tinggi logo di footer (bawah) */
+            width: auto;
+            margin-right: 1px;
+            object-fit: contain;
         }
 
         .footer-logo-text {
@@ -1054,7 +1040,7 @@
         <div class="container">
             <div class="nav-container">
                 <a href="#" class="logo">
-                    <div class="logo-icon">TK</div>
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-img">
                     <div class="logo-text">Tanya<span>Kode</span></div>
                 </a>
                 
@@ -1064,14 +1050,14 @@
                     <a href="#home" class="nav-link">Beranda</a>
                     <a href="#story" class="nav-link">Cerita</a>
                     <a href="#levels" class="nav-link">Level Belajar</a>
-                    <a href="#articles" class="nav-link">Artikel</a>
                     <a href="#testimonials" class="nav-link">Testimoni</a>
+                    <a href="#articles" class="nav-link">Artikel</a>
                     <a href="#faq" class="nav-link">FAQ</a>
                 </nav>
                 
                 <div class="nav-buttons">
                     <a href="{{ route('login') }}" class="btn btn-outline">Masuk</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary">Belajar Gratis</a>
+                    <a href="{{ route('login') }}" class="btn btn-primary">Belajar Gratis</a>
                 </div>
             </div>
         </div>
@@ -1081,8 +1067,8 @@
         <a href="#home" class="nav-link">Beranda</a>
         <a href="#story" class="nav-link">Cerita</a>
         <a href="#levels" class="nav-link">Level Belajar</a>
-        <a href="#articles" class="nav-link">Artikel</a>
         <a href="#testimonials" class="nav-link">Testimoni</a>
+        <a href="#articles" class="nav-link">Artikel</a>
         <a href="#faq" class="nav-link">FAQ</a>
         <div class="mobile-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
             <a href="#login" class="btn btn-outline btn-small">Masuk</a>
@@ -1107,7 +1093,7 @@
                     </p>
                     
                     <div class="hero-buttons">
-                        <a href="#register" class="btn btn-primary">
+                        <a href="{{ route('login') }}" class="btn btn-primary">
                             <i class="fas fa-play-circle"></i>
                             Mulai Belajar Gratis
                         </a>
@@ -1389,7 +1375,7 @@
                                 Memahami perbedaan dan peran programmer serta developer dalam dunia teknologi. 
                                 Panduan untuk pemula yang ingin memulai karir di bidang IT.
                             </p>
-                            <a href="#" class="read-more">
+                            <a href="{{ route('articles.index') }}" target="_blank" rel="noopener" class="read-more">
                                 Baca Selengkapnya
                                 <i class="fas fa-arrow-right"></i>
                             </a>
@@ -1408,7 +1394,7 @@
                                 Manfaat belajar pemrograman sejak usia sekolah. Bagaimana koding mengasah 
                                 logika, kreativitas, dan mempersiapkan masa depan di era digital.
                             </p>
-                            <a href="#" class="read-more">
+                            <a href="{{ route('articles.index') }}" target="_blank" rel="noopener" class="read-more">
                                 Baca Selengkapnya
                                 <i class="fas fa-arrow-right"></i>
                             </a>
@@ -1427,7 +1413,7 @@
                                 Tips dan praktik terbaik untuk mengamakan akun pengguna di website. 
                                 Pelajari teknik validasi, enkripsi, dan proteksi dari serangan umum.
                             </p>
-                            <a href="#" class="read-more">
+                            <a href="{{ route('articles.index') }}" target="_blank" rel="noopener" class="read-more">
                                 Baca Selengkapnya
                                 <i class="fas fa-arrow-right"></i>
                             </a>
@@ -1503,7 +1489,7 @@
             <div class="footer-content">
                 <div class="footer-about">
                     <div class="footer-logo">
-                        <div class="footer-logo-icon">TK</div>
+                        <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="footer-logo-img">
                         <div class="footer-logo-text">TanyaKode</div>
                     </div>
                     <p class="footer-description">
