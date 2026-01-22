@@ -4,16 +4,9 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Dashboard') | TanyaKode</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
     <style>
         :root {
             --navy-dark: #0a192f;
@@ -31,7 +24,6 @@
             position: relative;
         }
 
-        /* Animated Background Elements */
         .bg-shape-1 {
             position: fixed;
             width: 600px;
@@ -130,7 +122,6 @@
             to { opacity: 1; }
         }
 
-        /* Sidebar */
         .sidebar {
             background: linear-gradient(180deg, var(--navy-dark), var(--navy-medium));
             min-height: 100vh;
@@ -210,14 +201,12 @@
             left: 100%;
         }
 
-        /* Content Area */
         .content-wrapper {
             margin-left: 250px;
             padding: 30px;
             animation: fade-in 0.8s ease-out;
         }
 
-        /* Cards */
         .navy-card {
             background: var(--white);
             border: none;
@@ -245,7 +234,6 @@
             padding: 25px;
         }
 
-        /* Progress Bars */
         .progress-navy {
             height: 10px;
             border-radius: 10px;
@@ -280,7 +268,6 @@
             from { width: 0; }
         }
 
-        /* Buttons */
         .btn-navy {
             background: var(--navy-dark);
             color: var(--white);
@@ -316,7 +303,6 @@
             box-shadow: 0 8px 20px rgba(100, 255, 218, 0.3);
         }
 
-        /* Badges */
         .badge-navy {
             background: var(--navy-dark);
             color: var(--white);
@@ -333,7 +319,6 @@
             font-weight: 600;
         }
 
-        /* Stats */
         .stat-card {
             padding: 25px;
             border-radius: 16px;
@@ -347,7 +332,6 @@
             box-shadow: 0 10px 25px rgba(10, 25, 47, 0.1);
         }
 
-        /* Timeline */
         .timeline-item {
             position: relative;
             padding-left: 25px;
@@ -381,19 +365,28 @@
             display: none;
         }
 
-        /* Animations Delay */
         .delay-1 { animation-delay: 0.1s; }
         .delay-2 { animation-delay: 0.2s; }
         .delay-3 { animation-delay: 0.3s; }
         .delay-4 { animation-delay: 0.4s; }
         .delay-5 { animation-delay: 0.5s; }
-    </style>
 
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+        }
+    </style>
     @yield('css')
 </head>
 <body>
-
-<!-- Animated Background Elements -->
 <div class="bg-shape-1"></div>
 <div class="bg-shape-2"></div>
 <div class="bg-shape-3"></div>
@@ -406,7 +399,6 @@
 <div class="floating-dot" style="width: 6px; height: 6px; animation-delay: 10s;"></div>
 
 <div class="d-flex">
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h4>TANYAKODE</h4>
@@ -426,13 +418,7 @@
                 </a>
             </div>  
             <div class="nav-item">
-                <a href="{{ route('user.courses.index') }}">    
-                    <i class="fa-solid fa-book-open"></i>
-                    <span>Kursus</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="#">
+                <a href="#">    
                     <i class="fa-solid fa-credit-card"></i>
                     <span>Pembayaran</span>
                 </a>
@@ -443,10 +429,17 @@
                     <span>Spin Wheel</span>
                 </a>
             </div>
-            <div class="nav-item">
-                <a href="#">
+            <div class="nav-item position-relative">
+                <a href="#" onclick="markNotificationsRead()">
                     <i class="fa-solid fa-bell"></i>
                     <span>Notifikasi</span>
+                    <span id="notif-badge" class="notification-badge" style="display:none"></span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="{{ route('user.profile.show') }}">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profil</span>
                 </a>
             </div>
         </div>
@@ -462,7 +455,6 @@
         </div>
     </div>
 
-    <!-- CONTENT -->
     <div class="content-wrapper flex-grow-1">
         @yield('content')
     </div>
@@ -470,12 +462,58 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    let notifInterval;
+    
+    function fetchNotif() {
+        fetch('/notifications/unread-count')
+            .then(r => r.text())
+            .then(c => {
+                const badge = document.getElementById('notif-badge')
+                if (c > 0) {
+                    badge.innerText = c
+                    badge.style.display = 'inline-block'
+                } else {
+                    badge.style.display = 'none'
+                }
+            })
+    }
+    
+    function markNotificationsRead() {
+        fetch('/notifications/read-all', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        }).then(() => {
+            document.getElementById('notif-badge').style.display = 'none';
+            window.location.href = "{{ route('user.dashboard') }}";
+        });
+    }
+    
+    function startPolling() {
+        fetchNotif();
+        notifInterval = setInterval(fetchNotif, 5000);
+    }
+    
+    function stopPolling() {
+        if (notifInterval) {
+            clearInterval(notifInterval);
+        }
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate progress bars on scroll
-        const observerOptions = {
-            threshold: 0.5
-        };
-
+        startPolling();
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                startPolling();
+            }
+        });
+        
+        const observerOptions = { threshold: 0.5 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -490,7 +528,6 @@
             observer.observe(bar);
         });
 
-        // Add hover effect to cards
         const cards = document.querySelectorAll('.navy-card');
         cards.forEach(card => {
             card.addEventListener('mouseenter', () => {
@@ -502,7 +539,6 @@
             });
         });
 
-        // Animate stats counter
         function animateCounter(element, target) {
             let current = 0;
             const increment = target / 50;
@@ -519,22 +555,13 @@
         const stats = document.querySelectorAll('.stat-number');
         stats.forEach(stat => {
             const target = parseInt(stat.textContent);
-            animateCounter(stat, target);
+            if (!isNaN(target)) {
+                animateCounter(stat, target);
+            }
         });
     });
 </script>
 @yield('js')
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // ... animasi progress bar & card hover Anda ...
-            const observerOptions = { threshold: 0.5 };
-            // ... (kode animasi dashboard Anda biarkan saja) ...
-        });
-    </script>
-    
-    @yield('js')       @stack('scripts')  </body>
-</html>
+@stack('scripts')
 </body>
 </html>

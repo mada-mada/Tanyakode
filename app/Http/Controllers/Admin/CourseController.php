@@ -13,7 +13,6 @@ class CourseController extends Controller
 {
     public function index()
     {
-        /** @var User $user */
         $user = Auth::user();
 
         $courses = Course::when($user->role === 'school_admin', function ($query) use ($user) {
@@ -32,7 +31,6 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        /** @var User $user */
         $user = Auth::user();
 
         $validated = $request->validate([
@@ -61,14 +59,12 @@ class CourseController extends Controller
 
     public function show(Course $course)
     {
-        // Load modules dan contents untuk ditampilkan di detail
         $course->load(['modules.contents']);
         return view('admin.courses.show', compact('course'));
     }
 
     public function edit(Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
@@ -77,7 +73,6 @@ class CourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
@@ -98,14 +93,12 @@ class CourseController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
 
-
         $course->update($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil diperbarui.');
     }
 
     public function destroy(Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
@@ -113,14 +106,10 @@ class CourseController extends Controller
         return redirect()->route('courses.index')->with('success', 'Kursus dihapus.');
     }
 
-    /**
-     * Menampilkan Halaman Dashboard Admin.
-     */
     public function dashboard()
     {
         $user = Auth::user();
 
-        // Hitung kursus berdasarkan role
         $courseQuery = Course::query();
 
         if ($user->role === 'school_admin') {
@@ -131,8 +120,6 @@ class CourseController extends Controller
 
         $totalCourses = $courseQuery->count();
 
-        // Kirim data ke view dashboard yang baru kita buat
         return view('admin.dashboard', compact('totalCourses'));
     }
 }
-

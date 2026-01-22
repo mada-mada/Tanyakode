@@ -1,369 +1,913 @@
-@extends('layouts.user')
-
-@section('content')
-
-{{-- STYLE KHUSUS: Layout Stabil & Bersih --}}
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-
-    /* 1. HERO SECTION (Header Atas) */
-    .hero-section {
-        background: radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 90%);
-        color: white;
-        padding-top: 60px;
-        padding-bottom: 80px; /* Jarak bawah secukupnya */
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .hero-bg-pattern {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px);
-        background-size: 40px 40px;
-        opacity: 0.05;
-    }
-
-    /* 2. WRAPPER UTAMA (Mengatur Posisi Konten) */
-    .main-content {
-        margin-top: -40px; /* Naik sedikit ke atas background agar cantik tapi aman */
-        position: relative;
-        z-index: 10;
-    }
-
-    /* Di HP, hilangkan efek naik agar tidak berantakan */
-    @media (max-width: 991.98px) {
-        .hero-section { padding-bottom: 40px; }
-        .main-content { margin-top: 0; }
-    }
-
-    /* 3. CARD STYLE */
-    .card-clean {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    /* 4. SIDEBAR STICKY (Sangat Penting) */
-    .sidebar-sticky {
-        position: -webkit-sticky; /* Support Safari */
-        position: sticky;
-        top: 100px; /* Jarak berhenti dari atas layar */
-        z-index: 99;
-    }
-
-    /* 5. COMPONENTS */
-    .btn-primary-custom {
-        background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
-        border: none; color: white; font-weight: 700; padding: 14px 20px; border-radius: 12px;
-        transition: all 0.3s; display: block; width: 100%;
-        box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3);
-        cursor: pointer;
-    }
-    .btn-primary-custom:hover { 
-        transform: translateY(-2px); 
-        box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.4); color: white; 
-        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-    }
-    .btn-primary-custom:disabled {
-        background: #cbd5e1;
-        transform: none;
-        box-shadow: none;
-        cursor: not-allowed;
-    }
-
-    .accordion-item { border: 1px solid #f1f5f9; margin-bottom: 10px; border-radius: 12px !important; overflow: hidden; }
-    .accordion-button { background-color: white; font-weight: 600; color: #1e293b; padding: 16px 20px; box-shadow: none !important; }
-    .accordion-button:not(.collapsed) { background-color: #f0f9ff; color: #0284c7; }
-
-    .thumbnail-box {
-        height: 200px; width: 100%; position: relative;
-        background: linear-gradient(45deg, #1e293b, #334155);
-        display: flex; align-items: center; justify-content: center; 
-        border-radius: 12px; overflow: hidden; margin-bottom: 20px;
-    }
-    .thumbnail-box img { width: 100%; height: 100%; object-fit: cover; }
-    .thumbnail-placeholder { color: rgba(255,255,255,0.2); font-size: 3rem; }
-    
-    .tab-btn { border-radius: 50px; padding: 8px 24px; font-weight: 600; }
-</style>
-
-{{-- LOGIKA HITUNG DATA --}}
-@php
-    $totalContent = 0;
-    if($course->modules) {
-        foreach($course->modules as $mod) {
-            $totalContent += $mod->contents ? $mod->contents->count() : 0;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Pengguna - TanyaKode</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #4cc9f0;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-blue: #e3f2fd;
+            --gradient-1: linear-gradient(135deg, #4361ee, #3a0ca3);
+            --gradient-2: linear-gradient(135deg, #7209b7, #4361ee);
+            --gradient-3: linear-gradient(135deg, #4cc9f0, #4895ef);
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.15);
+            --radius: 12px;
+            --radius-lg: 20px;
         }
-    }
-@endphp
 
-{{-- A. HERO SECTION --}}
-<div class="hero-section">
-    <div class="hero-bg-pattern"></div>
-    <div class="container position-relative">
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="mb-3">
-                    <span class="badge bg-white bg-opacity-10 border border-white border-opacity-20 text-white px-3 py-2 rounded-pill fw-bold">
-                        {{ strtoupper($course->level ?? 'GENERAL') }}
-                    </span>
-                </div>
-                <h1 class="display-5 fw-bold mb-3 lh-sm">{{ $course->title }}</h1>
-                <p class="text-white text-opacity-75 mb-4 lead fs-6" style="max-width: 600px; line-height: 1.7;">
-                    {{ Str::limit($course->description, 150) }}
-                </p>
-                <div class="d-flex flex-wrap gap-4 text-sm text-white text-opacity-90 fw-medium">
-                    <span class="me-3"><i class="fas fa-book-open me-2"></i> {{ $course->modules ? $course->modules->count() : 0 }} Modul</span>
-                    <span><i class="fas fa-film me-2"></i> {{ $totalContent }} Materi</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{{-- B. MAIN CONTENT --}}
-<div class="container main-content pb-5 mt-2">
-    
-    <div class="row align-items-start">
-        
-        {{-- 1. KOLOM KIRI (Konten Utama) --}}
-        <div class="col-lg-8 mb-5">
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f8fafd;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -10;
+            overflow: hidden;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0.05;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+
+        .container-fluid {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+
+        .col-md-4, .col-md-8 {
+            padding: 0 15px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .col-md-4 { width: 33.333%; }
+            .col-md-8 { width: 66.667%; }
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            margin-bottom: 30px;
+            animation: cardAppear 0.6s ease-out;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-primary {
+            border-top: 5px solid var(--primary);
+        }
+
+        .card-primary.card-outline {
+            border: 1px solid var(--primary);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.05));
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 20px 25px;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .box-profile {
+            text-align: center;
+        }
+
+        .profile-user-img {
+            width: 150px;
+            height: 150px;
+            border: 5px solid white;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .profile-user-img:hover {
+            transform: scale(1.05);
+        }
+
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .img-circle {
+            border-radius: 50%;
+        }
+
+        .mt-3 {
+            margin-top: 1rem !important;
+        }
+
+        .profile-username {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .text-muted {
+            color: var(--gray) !important;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.7s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-success {
+            background: var(--gradient-3);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, #3abfd4, #2d8fe3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        strong {
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        hr {
+            margin: 25px 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(67, 97, 238, 0.2), transparent);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .card-footer {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.02));
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 20px 25px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .progress-section {
+            margin-top: 30px;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-container {
+            background: #f0f4f8;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 6px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge-primary {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background: rgba(6, 214, 160, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(255, 209, 102, 0.1);
+            color: var(--warning);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.02));
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            border: 1px solid rgba(67, 97, 238, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 20px 15px;
+            }
             
-            {{-- Tab Menu --}}
-            <div class="d-flex gap-2 mb-4 mt-3">
-                <button class="btn btn-dark shadow-sm tab-btn">Tentang Kursus</button>
-                <button class="btn btn-white border text-muted bg-white hover-bg-light tab-btn">Ulasan</button>
-            </div>
+            .card-body {
+                padding: 20px;
+            }
+            
+            .profile-user-img {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .profile-username {
+                font-size: 1.5rem;
+            }
+            
+            .card-footer {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-            {{-- Kartu Deskripsi --}}
-            <div class="card-clean p-4 p-md-5 mb-4">
-                <p class="text-muted mb-0" style="line-height: 1.8; text-align: justify;">
-                    {{ $course->description }}
-                </p>
-            </div>
+        @media (max-width: 576px) {
+            .profile-user-img {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .profile-username {
+                font-size: 1.3rem;
+            }
+            
+            .card-title {
+                font-size: 1.2rem;
+            }
+            
+            .stat-number {
+                font-size: 1.7rem;
+            }
+        }
 
-            {{-- Kurikulum --}}
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-end mb-3">
-                    <h4 class="fw-bold text-dark mb-0">Kurikulum</h4>
-                    <span class="text-muted small fw-bold">{{ $course->modules ? $course->modules->count() : 0 }} Modul • {{ $totalContent }} Materi</span>
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: floatBtn 3s infinite ease-in-out;
+        }
+
+        @keyframes floatBtn {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            animation: none;
+        }
+
+        .nav-header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .logo-text span {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            padding: 8px 0;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .logout-form {
+            display: inline;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 8px 0;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .logout-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            color: var(--primary);
+        }
+
+        .logout-btn:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <header class="nav-header">
+        <div class="nav-container">
+            <a href="{{ route('user.dashboard') }}" class="logo">
+                <div class="logo-icon">TK</div>
+                <div class="logo-text">Tanya<span>Kode</span></div>
+            </a>
+            
+            <nav class="nav-menu">
+                <a href="{{ route('user.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ route('user.courses.index') }}" class="nav-link">Belajar</a>
+                <a href="{{ route('user.profile.show') }}" class="nav-link active">Profil</a>
+                <form method="POST" action="{{ route('logout') }}" class="logout-form">
+                    @csrf
+                    <button type="submit" class="logout-btn">Keluar</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card card-primary card-outline">
+                    <div class="card-body box-profile">
+                        <img class="profile-user-img img-fluid img-circle"
+                             src="https://ui-avatars.com/api/?name={{ urlencode($user->nama_lengkap ?? $user->name) }}&background=4361ee&color=ffffff&size=150&font-size=0.5"
+                             alt="User profile picture">
+
+                        <h3 class="profile-username mt-3">
+                            {{ $user->nama_lengkap ?? $user->name }}
+                        </h3>
+
+                        <p class="text-muted">{{ $user->email }}</p>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                {{-- TODO: ambil dari tabel user_progress --}}
+                                <div class="stat-number">-</div>
+                                <div class="stat-label">Progress</div>
+                            </div>
+                            <div class="stat-card">
+                                {{-- TODO: ambil dari tabel completed_courses --}}
+                                <div class="stat-number">-</div>
+                                <div class="stat-label">Selesai</div>
+                            </div>
+                        </div>
+
+                        <a href="{{ route('user.profile.edit') }}" class="btn btn-primary btn-block mt-3">
+                            <i class="fas fa-edit"></i>
+                            Edit Profil
+                        </a>
+                    </div>
                 </div>
 
-                <div class="accordion" id="accordionSyllabus">
-                    @forelse($course->modules as $index => $module)
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading{{ $module->id }}">
-                            <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $module->id }}">
-                                <div class="d-flex justify-content-between w-100 me-3 align-items-center">
-                                    <span class="fw-bold">{{ $module->title }}</span>
-                                    <small class="text-muted bg-white px-2 py-1 rounded border">
-                                        {{ $module->contents ? $module->contents->count() : 0 }} Materi
-                                    </small>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Level Saat Ini</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-container">
+                            <div class="progress-info">
+                                {{-- TODO: ambil dari tabel user_levels --}}
+                                <span>-</span>
+                                <span>0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="badge-container mt-3">
+                            {{-- TODO: ambil dari tabel user_badges --}}
+                            <span class="badge badge-primary"><i class="fas fa-medal"></i> Belum ada badge</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-user-circle"></i> Biodata</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <strong><i class="fas fa-school"></i> Sekolah</strong>
+                            <p class="text-muted">{{ $user->sekolah ?? '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="form-group">
+                            <strong><i class="fas fa-map-marker-alt"></i> Alamat</strong>
+                            <p class="text-muted">{{ $user->alamat ?? '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="form-group">
+                            <strong><i class="fas fa-phone"></i> No HP</strong>
+                            <p class="text-muted">{{ $user->no_hp ?? '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="form-group">
+                            <strong><i class="fas fa-calendar-alt"></i> Bergabung Sejak</strong>
+                            <p class="text-muted">{{ $user->created_at ? $user->created_at->format('d F Y') : '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="form-group">
+                            <strong><i class="fas fa-trophy"></i> Prestasi</strong>
+                            <p class="text-muted">{{ $user->prestasi ?? '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Aktivitas Terbaru</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-list">
+                            <div class="activity-item" style="padding: 15px; border-bottom: 1px solid #eee;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <strong>Belum ada aktivitas</strong>
+                                        <p style="color: var(--gray); margin: 5px 0 0 0; font-size: 0.9rem;">Mulai belajar untuk melihat aktivitas</p>
+                                    </div>
                                 </div>
-                            </button>
-                        </h2>
-                        <div id="collapse{{ $module->id }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionSyllabus">
-                            <div class="accordion-body bg-white pt-2">
-                                <ul class="list-unstyled mb-0">
-                                    @forelse($module->contents as $content)
-                                        <li class="d-flex align-items-center py-2 border-bottom last:border-0">
-                                            @if(Str::contains(strtolower($content->content_type ?? 'video'), 'video'))
-                                                <div class="bg-light rounded-circle p-2 me-3 text-primary"><i class="fas fa-play fa-sm"></i></div>
-                                            @else
-                                                <div class="bg-light rounded-circle p-2 me-3 text-warning"><i class="fas fa-file-alt fa-sm"></i></div>
-                                            @endif
-                                            <span class="text-dark">{{ $content->title }}</span>
-                                        </li>
-                                    @empty
-                                        <li class="text-muted small">Belum ada materi.</li>
-                                    @endforelse
-                                </ul>
                             </div>
                         </div>
                     </div>
-                    @empty
-                        <div class="alert alert-light border text-center">Belum ada kurikulum.</div>
-                    @endforelse
                 </div>
             </div>
         </div>
-
-        {{-- 2. KOLOM KANAN (Sidebar Pembayaran) --}}
-        <div class="col-lg-4 mt-5">
-            <div class="sidebar-sticky"> 
-                
-                <div class="card-clean p-4">
-                    
-                    {{-- Thumbnail --}}
-                    <div class="thumbnail-box shadow-sm">
-                        @if(!empty($course->cover) && file_exists(storage_path('app/public/' . $course->cover)))
-                            <img src="{{ asset('storage/' . $course->cover) }}" alt="{{ $course->title }}">
-                        @else
-                            <div class="thumbnail-placeholder"><i class="fas fa-laptop-code"></i></div>
-                        @endif
-                        <div class="position-absolute bg-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 50px; height: 50px;">
-                            <i class="fas fa-play text-primary ml-1"></i>
-                        </div>
-                    </div>
-
-                    {{-- Harga --}}
-                    <div class="text-center mb-4">
-                        @if($course->price == 0)
-                            <h2 class="fw-bold text-success mb-0">GRATIS</h2>
-                        @else
-                            <h2 class="fw-bold text-dark mb-0">Rp {{ number_format($course->price, 0, ',', '.') }}</h2>
-                        @endif
-                    </div>
-                    
-                    {{-- TOMBOL ACTION & PAYMENT LOGIC --}}
-<div class="d-grid gap-2 mb-4">
-    @auth
-        {{-- LOGIKA UTAMA: Cek Pembelian --}}
-        @if(auth()->user()->hasPurchased($course->id))
-            
-            {{-- JIKA SUDAH BELI: Tampilkan Tombol Lanjut Belajar --}}
-            <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn btn-success btn-lg btn-block w-100 shadow-sm font-weight-bold" style="border-radius: 12px;">
-                <i class="fas fa-play-circle mr-2"></i> Lanjut Belajar
-            </a>
-
-        @else
-            {{-- JIKA BELUM BELI --}}
-            
-            @if($course->price > 0)
-                {{-- Tombol Beli --}}
-                <button id="pay-button" class="btn-primary-custom text-center text-decoration-none">
-                    Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>
-                </button>
-            @else
-                {{-- Tombol Gratis --}}
-                <a href="{{ route('user.courses.learning', ['slug' => $course->slug]) }}" class="btn-primary-custom text-center text-decoration-none">
-                    Mulai Gratis <i class="fas fa-arrow-right ms-2"></i>
-                </a>
-            @endif
-
-            {{-- Indikator Loading --}}
-            <div id="loading-payment" class="text-center mt-2" style="display: none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <p class="text-muted small mt-1">Memproses pembayaran...</p>
-            </div>
-        @endif
-
-    @else
-        <a href="{{ route('login') }}" class="btn btn-secondary text-center text-decoration-none">
-            Login untuk Membeli <i class="fas fa-lock ms-2"></i>
-        </a>
-    @endauth
-</div>
-
-                    {{-- Fitur --}}
-                    <div class="bg-light p-3 rounded-3">
-                        <h6 class="fw-bold mb-3 small text-uppercase text-muted">Benefit Kursus:</h6>
-                        <ul class="list-unstyled d-flex flex-column gap-2 text-sm text-dark mb-0">
-                            <li class="d-flex align-items-center text-muted small"><i class="fas fa-clock text-success me-2"></i> Akses Selamanya</li>
-                            <li class="d-flex align-items-center text-muted small"><i class="fas fa-mobile-alt text-success me-2"></i> Akses HP & PC</li>
-                            <li class="d-flex align-items-center text-muted small"><i class="fas fa-certificate text-success me-2"></i> Sertifikat Penyelesaian</li>
-                        </ul>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
     </div>
-</div>
-@endsection
 
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <div class="floating-btn" onclick="window.location.href='{{ route('user.courses.index') }}'">
+        <i class="fas fa-play"></i>
+    </div>
 
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.clientKey') }}"></script>
-
-    <script type="text/javascript">
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const payButton = document.getElementById('pay-button');
-            const loadingIndicator = document.getElementById('loading-payment');
-
-            // Cek apakah tombol ada (hanya muncul jika user login & kursus berbayar)
-            if (payButton) {
-                payButton.addEventListener('click', async function(e) {
+            const particlesContainer = document.getElementById('particles');
+            
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const size = Math.random() * 8 + 3;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.animationDelay = `${Math.random() * 20}s`;
+                particle.style.opacity = Math.random() * 0.05 + 0.02;
+                
+                const hue = Math.random() * 60 + 200;
+                particle.style.background = `hsl(${hue}, 70%, 60%)`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 300);
+            });
+            
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
                     e.preventDefault();
-
-                    // --- STATE: LOADING ---
-                    payButton.disabled = true;
-                    payButton.innerHTML = 'Memuat...';
-                    loadingIndicator.style.display = 'block';
-
-                    try {
-                        // --- STEP 1: Minta Token ke Controller ---
-                        const response = await fetch("{{ route('user.payment.process') }}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                                "Accept": "application/json"
-                            },
-                            body: JSON.stringify({
-                                course_id: "{{ $course->id }}",
-                                price: "{{ $course->price }}"
-                            })
-                        });
-
-                        // Cek jika controller error (bukan JSON)
-                        if (!response.ok) {
-                            throw new Error('Terjadi kesalahan pada server.');
-                        }
-
-                        const data = await response.json();
-
-                        // --- STATE: SELESAI LOADING ---
-                        loadingIndicator.style.display = 'none';
-                        payButton.disabled = false;
-                        payButton.innerHTML = 'Beli Sekarang <i class="fas fa-shopping-cart ms-2"></i>';
-
-                        // --- STEP 2: Handle Respon Controller ---
-                        if (data.status === 'success' || data.status === 'pending') {
-                            
-                            // Munculkan Popup Midtrans
-                            window.snap.pay(data.snap_token, {
-                                onSuccess: function(result) {
-                                    // Redirect ke halaman sukses dengan parameter
-                                    window.location.href = "{{ route('user.payment.success') }}?order_id=" + result.order_id + "&transaction_status=settlement";
-                                },
-                                onPending: function(result) {
-                                    Swal.fire('Menunggu Pembayaran', 'Silakan selesaikan pembayaran Anda.', 'info');
-                                },
-                                onError: function(result) {
-                                    Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
-                                },
-                                onClose: function() {
-                                    Swal.fire('Dibatalkan', 'Anda menutup popup pembayaran.', 'warning');
-                                }
-                            });
-
-                        } else if (data.status === 'free') {
-                            // Jika kursus gratis (ditangani controller), langsung redirect
-                            window.location.href = data.redirect_url;
-                        } else {
-                            // Error dari controller (misal: voucher salah, dll)
-                            Swal.fire('Gagal', data.message || 'Gagal memproses.', 'error');
-                        }
-
-                    } catch (error) {
-                        console.error('Error:', error);
-                        loadingIndicator.style.display = 'none';
-                        payButton.disabled = false;
-                        payButton.innerHTML = 'Coba Lagi';
-                        Swal.fire('Oops...', error.message, 'error');
+                    
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const targetUrl = this.getAttribute('href');
+                    if (targetUrl) {
+                        setTimeout(() => {
+                            window.location.href = targetUrl;
+                        }, 300);
                     }
                 });
-            }
+            });
+            
+            document.querySelector('.btn-primary').addEventListener('mouseenter', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const ripple = document.createElement('span');
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.querySelector('.logout-btn').addEventListener('click', function(e) {
+                if (!confirm('Apakah Anda yakin ingin keluar?')) {
+                    e.preventDefault();
+                }
+            });
         });
     </script>
-@endpush
+</body>
+</html>
