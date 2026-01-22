@@ -11,10 +11,17 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/theme-dracula.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-php.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-html.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-c_cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-ruby.min.js"></script>
 
     <style>
         :root { --bg-dark: #0f172a; --primary: #22d3ee; }
@@ -22,9 +29,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
         .tab-btn { position: relative; color: #94a3b8; transition: all 0.2s; }
-        .tab-btn:hover { color: #fff; }
         .tab-btn.active { color: var(--primary); }
         .tab-btn.active::after {
             content: ''; position: absolute; bottom: -11px; left: 0; width: 100%; height: 2px;
@@ -36,79 +41,60 @@
         .editor-container { border: 1px solid #334155; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; height: 500px; }
         .terminal-window { background: #1e1e1e; border-top: 1px solid #334155; height: 120px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
         .module-item.active { background: rgba(34, 211, 238, 0.05); border-left: 3px solid var(--primary); color: white; }
-        .glow-text { text-shadow: 0 0 10px rgba(34, 211, 238, 0.3); }
-        
-        /* Style untuk item terkunci */
         .locked-item { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
-        
-        /* Preview HTML */
         #preview-frame { background: white; width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
 
     @php
-        // 1. Ambil status completed dari controller (default false jika tidak ada)
         $courseCompleted = $isCompleted ?? false;
-
-        // 2. Ratakan semua konten
         $allContents = collect();
         foreach($course->modules as $mod) {
-            foreach($mod->contents as $cont) {
-                $allContents->push($cont);
-            }
+            foreach($mod->contents as $cont) { $allContents->push($cont); }
         }
 
-        // 3. Cari index saat ini
-        $currentIndex = $allContents->search(function($item) use ($activeContent) {
-            return $item->id == $activeContent->id;
-        });
-
-        // 4. Navigasi Next/Prev
+        $currentIndex = $allContents->search(fn($item) => $item->id == $activeContent->id);
         $prevContent = $currentIndex > 0 ? $allContents[$currentIndex - 1] : null;
         $nextContent = $currentIndex < $allContents->count() - 1 ? $allContents[$currentIndex + 1] : null;
 
-        // 5. Hitung Persentase Progress
-        // Jika completed, paksa 100%. Jika tidak, hitung berdasarkan posisi.
-        $progressPercent = $courseCompleted ? 100 : round(($currentIndex + 1) / $allContents->count() * 100);
+        $totalContents = $allContents->count();
+        $progressPercent = $courseCompleted ? 100 : ($totalContents > 0 ? round(($currentIndex + 1) / $totalContents * 100) : 0);
 
-        // 6. Tab Logic
         $isPractice = $activeContent && $activeContent->type == 'practice';
         $tabMateriActive = !$isPractice ? 'active' : '';
         $tabPraktekActive = $isPractice ? 'active' : '';
+
+        // UI Helpers
+        $lang = strtolower($activeContent->compiler_lang ?? 'javascript');
+        $fileIcon = 'fab fa-js text-yellow-400'; $fileName = 'script.js';
+        if($lang == 'python') { $fileIcon = 'fab fa-python text-blue-400'; $fileName = 'main.py'; }
+        elseif($lang == 'php') { $fileIcon = 'fab fa-php text-purple-400'; $fileName = 'index.php'; }
+        elseif($lang == 'html') { $fileIcon = 'fab fa-html5 text-orange-500'; $fileName = 'index.html'; }
+        elseif($lang == 'java') { $fileIcon = 'fab fa-java text-red-500'; $fileName = 'Main.java'; }
     @endphp
 
     <nav class="h-16 bg-[#0f172a] border-b border-gray-800 flex items-center justify-between px-4 lg:px-6 shrink-0 z-30">
         <div class="flex items-center gap-4">
-            <a href="{{ url('/user/courses') }}" class="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition border border-gray-700">
+            <a href="{{ url('/user/courses') }}" class="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 transition border border-gray-700">
                 <i class="fas fa-chevron-left text-sm"></i>
             </a>
-            <div class="h-8 w-[1px] bg-gray-700 hidden md:block"></div>
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="font-bold text-white text-sm md:text-base tracking-wide">{{ $course->name ?? 'Course Title' }}</h1>
-                    @if($activeContent)
-                        <span class="hidden md:inline-flex {{ $activeContent->type == 'practice' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' }} text-[10px] font-bold px-2 py-0.5 rounded border uppercase">
-                            {{ $activeContent->type ?? 'MODUL' }}
-                        </span>
-                    @endif
+                    <h1 class="font-bold text-white text-sm md:text-base">{{ $course->name ?? 'Course Title' }}</h1>
+                    <span class="hidden md:inline-flex {{ $isPractice ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' }} text-[10px] font-bold px-2 py-0.5 rounded border uppercase">
+                        {{ $activeContent->type ?? 'MODUL' }}
+                    </span>
                 </div>
-                <p class="text-xs text-gray-500 mt-0.5 truncate max-w-[200px] md:max-w-none">{{ $activeContent->title ?? 'Pilih Materi' }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ $activeContent->title }}</p>
             </div>
         </div>
         
         <div class="flex items-center gap-6">
-            <div class="hidden lg:flex flex-col w-40 gap-1 text-right">
-                <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                    Progress <span class="text-cyan-400 ml-1">{{ $progressPercent }}%</span>
-                </div>
+            <div class="hidden lg:flex flex-col w-40 text-right">
+                <div class="text-[10px] font-bold text-gray-400 uppercase">Progress <span class="text-cyan-400">{{ $progressPercent }}%</span></div>
                 <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
                     <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500" style="width: {{ $progressPercent }}%"></div>
-                </div>
-            </div>
-            <div class="flex items-center gap-3 border-l border-gray-700 pl-6">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-[2px]">
-                    <img src="https://ui-avatars.com/api/?name=User&background=0f172a&color=fff" class="rounded-full w-full h-full border-2 border-[#0f172a]" alt="User">
                 </div>
             </div>
         </div>
@@ -117,67 +103,46 @@
     <div class="flex flex-1 overflow-hidden">
         <main class="flex-1 flex flex-col bg-[#0b1120] overflow-y-auto custom-scroll relative">
             
-            @if($activeContent && !empty($activeContent->video_url))
-            <div class="w-full bg-black aspect-video max-h-[500px] relative flex items-center justify-center shadow-2xl shrink-0 border-b border-gray-800">
-                <iframe src="{{ $activeContent->video_url }}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            @if($activeContent->video_url)
+            <div class="w-full bg-black aspect-video max-h-[500px] relative flex items-center justify-center shrink-0 border-b border-gray-800">
+                <iframe src="{{ $activeContent->video_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
             </div>
             @endif
 
             <div class="px-6 lg:px-10 py-6 max-w-7xl mx-auto w-full">
-                
                 <div class="flex border-b border-gray-800 mb-6 sticky top-0 bg-[#0b1120]/95 backdrop-blur z-20 pt-2 gap-8">
-                    <button onclick="switchTab('materi')" id="tab-materi" class="tab-btn {{ $tabMateriActive }} pb-3 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-book-reader"></i> Materi
-                    </button>
-                    <button onclick="switchTab('praktek')" id="tab-praktek" class="tab-btn {{ $tabPraktekActive }} pb-3 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-code"></i> Lab Code
-                    </button>
-                    <button onclick="switchTab('diskusi')" id="tab-diskusi" class="tab-btn pb-3 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-comments"></i> Diskusi
-                    </button>
+                    <button onclick="switchTab('materi')" id="tab-materi" class="tab-btn {{ $tabMateriActive }} pb-3 text-sm font-bold uppercase tracking-wider">Materi</button>
+                    <button onclick="switchTab('praktek')" id="tab-praktek" class="tab-btn {{ $tabPraktekActive }} pb-3 text-sm font-bold uppercase tracking-wider">Lab Code</button>
+                    <button onclick="switchTab('diskusi')" id="tab-diskusi" class="tab-btn pb-3 text-sm font-bold uppercase tracking-wider">Diskusi</button>
                 </div>
 
                 <div id="content-materi" class="tab-content {{ $tabMateriActive }} space-y-8 pb-20">
-                    <div>
-                        <h2 class="text-3xl font-bold text-white mb-2">{{ $activeContent->title ?? 'Judul Materi' }}</h2>
-                        <div class="flex items-center gap-3 text-sm text-gray-400">
-                            <span><i class="far fa-clock mr-1"></i> Update: {{ $activeContent->updated_at ? $activeContent->updated_at->format('d M Y') : '-' }}</span>
-                        </div>
-                    </div>
-
-                    <div class="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed">
-                        {!! $activeContent->content_body ?? '<p class="text-gray-500 italic">Tidak ada konten teks.</p>' !!}
+                    <h2 class="text-3xl font-bold text-white mb-2">{{ $activeContent->title }}</h2>
+                    <div class="prose prose-invert prose-lg max-w-none text-gray-300">
+                        {!! $activeContent->content_body !!}
                     </div>
 
                     <div class="flex justify-between pt-8 border-t border-gray-800 mt-10">
                         @if($prevContent)
-                            <a href="{{ route('user.courses.learning', ['slug' => $course->slug, 'contentId' => $prevContent->id]) }}" 
-                               class="group flex items-center gap-3 px-5 py-3 rounded-lg border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white transition">
-                                <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+                            <a href="{{ route('user.courses.learning', ['slug' => $course->slug, 'contentId' => $prevContent->id]) }}" class="group flex items-center gap-3 px-5 py-3 rounded-lg border border-gray-700 text-gray-400 hover:text-white transition">
+                                <i class="fas fa-arrow-left"></i>
                                 <div class="text-left hidden sm:block">
-                                    <div class="text-[10px] uppercase tracking-wider opacity-60">Materi Sebelumnya</div>
+                                    <div class="text-[10px] uppercase opacity-60">Sebelumnya</div>
                                     <div class="font-bold text-sm truncate max-w-[150px]">{{ $prevContent->title }}</div>
                                 </div>
                             </a>
-                        @else
-                            <div></div>
-                        @endif
+                        @else <div></div> @endif
 
                         @if($nextContent)
-                            <a href="{{ route('user.courses.learning', ['slug' => $course->slug, 'contentId' => $nextContent->id]) }}" 
-                               class="group flex items-center gap-3 px-5 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-900/50 transition">
+                            <a href="{{ route('user.courses.learning', ['slug' => $course->slug, 'contentId' => $nextContent->id]) }}" class="group flex items-center gap-3 px-5 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg transition">
                                 <div class="text-right hidden sm:block">
-                                    <div class="text-[10px] uppercase tracking-wider opacity-80">Materi Selanjutnya</div>
+                                    <div class="text-[10px] uppercase opacity-80">Selanjutnya</div>
                                     <div class="font-bold text-sm truncate max-w-[150px]">{{ $nextContent->title }}</div>
                                 </div>
-                                <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                                <i class="fas fa-arrow-right"></i>
                             </a>
                         @else
-                            <a href="{{ route('user.courses.index') }}" 
-                               class="group flex items-center gap-3 px-5 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/50 transition">
-                                <span class="font-bold text-sm">Selesai Kursus</span>
-                                <i class="fas fa-check-circle"></i>
-                            </a>
+                            <a href="{{ route('user.courses.index') }}" class="bg-green-600 hover:bg-green-500 text-white px-5 py-3 rounded-lg font-bold transition">Selesai Kursus</a>
                         @endif
                     </div>
                 </div>
@@ -186,96 +151,50 @@
                     <div class="mb-4 flex justify-between items-end">
                         <div>
                             <h3 class="font-bold text-white text-lg">🚀 Live Coding Lab</h3>
-                            <p class="text-gray-400 text-xs">
-                                Bahasa: <span class="text-cyan-400 font-bold uppercase">{{ $activeContent->compiler_lang ?? 'JAVASCRIPT' }}</span>
-                            </p>
+                            <p class="text-gray-400 text-xs uppercase">{{ $activeContent->compiler_lang }}</p>
                         </div>
-                        <button onclick="runCode()" class="bg-green-600 hover:bg-green-500 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-green-900/30 flex items-center gap-2 transition transform hover:-translate-y-0.5">
+                        <button id="btn-run" onclick="runCode()" class="bg-green-600 hover:bg-green-500 text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
                             <i class="fas fa-play"></i> Run Code
                         </button>
                     </div>
 
                     <div class="editor-container shadow-2xl">
                         <div class="bg-[#1e1e1e] flex items-center px-2 pt-2 border-b border-[#333]">
-                            <div class="px-4 py-2 bg-[#282a36] text-gray-200 text-xs border-t border-l border-r border-[#333] rounded-t-md flex items-center gap-2 relative top-[1px]">
-                                @if( ($activeContent->compiler_lang ?? '') == 'php')
-                                    <i class="fab fa-php text-purple-400"></i> index.php
-                                @elseif( ($activeContent->compiler_lang ?? '') == 'html')
-                                    <i class="fab fa-html5 text-orange-500"></i> index.html
-                                @else
-                                    <i class="fab fa-js text-yellow-400"></i> script.js
-                                @endif
+                            <div class="px-4 py-2 bg-[#282a36] text-gray-200 text-xs rounded-t-md flex items-center gap-2 relative top-[1px]">
+                                <i class="{{ $fileIcon }}"></i> {{ $fileName }}
                             </div>
                         </div>
                         <div id="editor" class="flex-1"></div>
-                        <div class="terminal-window p-3 overflow-y-auto" id="terminal-container">
+                        <div class="terminal-window p-3 overflow-y-auto">
                             <div class="flex justify-between items-center mb-2">
-                                <span class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">OUTPUT</span>
-                                <button onclick="clearConsole()" class="text-gray-500 hover:text-white text-[10px]"><i class="fas fa-trash"></i> Clear</button>
+                                <span class="text-gray-500 text-[10px] uppercase font-bold">TERMINAL OUTPUT</span>
+                                <button onclick="clearConsole()" class="text-gray-500 hover:text-white text-[10px]">Clear</button>
                             </div>
                             <div id="console-output" class="text-green-400 space-y-1 font-mono text-xs hidden"></div>
                             <div id="html-preview" class="w-full h-full bg-white hidden rounded"></div>
                         </div>
                     </div>
                 </div>
-
-                <div id="content-diskusi" class="tab-content pb-20">
-                    <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-8 text-center">
-                        <h3 class="text-xl font-bold text-white mb-2">Forum Diskusi</h3>
-                        <p class="text-gray-400 text-sm mb-6">Diskusikan materi ini bersama mentor.</p>
-                        <button class="px-6 py-2.5 bg-white text-black font-bold rounded-full hover:bg-cyan-50 transition">Mulai Diskusi</button>
-                    </div>
-                </div>
-
             </div>
         </main>
 
-        <aside class="w-80 bg-[#0f172a] border-l border-gray-800 flex flex-col shrink-0 z-20 hidden xl:flex">
-            <div class="p-5 border-b border-gray-800">
-                <h3 class="font-bold text-white text-xs uppercase tracking-widest mb-4 text-gray-400">Daftar Modul</h3>
-            </div>
-
+        <aside class="w-80 bg-[#0f172a] border-l border-gray-800 flex flex-col shrink-0 hidden xl:flex">
+            <div class="p-5 border-b border-gray-800 font-bold text-gray-400 uppercase text-xs">Daftar Modul</div>
             <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1">
-                @foreach($course->modules as $index => $module)
+                @foreach($course->modules as $module)
                 <div class="rounded-lg overflow-hidden mb-2">
-                    <div class="px-3 py-2 text-xs font-bold text-cyan-400 uppercase flex justify-between items-center bg-cyan-900/10 border border-cyan-500/20 rounded cursor-pointer">
-                        <span class="glow-text">Modul {{ $index + 1 }}: {{ $module->name }}</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-
+                    <div class="px-3 py-2 text-xs font-bold text-cyan-400 bg-cyan-900/10 rounded cursor-pointer">{{ $module->name }}</div>
                     <div class="mt-1 ml-2 border-l border-cyan-900/50 pl-2 space-y-1 py-1">
                         @foreach($module->contents as $content)
                             @php
-                                $isActive = $activeContent && $activeContent->id == $content->id;
-                                
-                                // Cari urutan konten ini secara global
-                                $thisContentIndex = $allContents->search(function($item) use ($content) {
-                                    return $item->id == $content->id;
-                                });
-
-                                // LOGIKA PENGUNCIAN:
-                                // Kunci jika:
-                                // 1. User BELUM selesai kursus ($courseCompleted == false)
-                                // 2. DAN materi ini berada di masa depan ($thisContentIndex > $currentIndex)
-                                // Jika user sudah completed, maka (!true) menjadi false, sehingga isLocked selalu false.
-                                $isLocked = !$courseCompleted && ($thisContentIndex > $currentIndex);
+                                $isActive = $activeContent->id == $content->id;
+                                $thisIndex = $allContents->search(fn($item) => $item->id == $content->id);
+                                $isLocked = !$courseCompleted && ($thisIndex > $currentIndex);
                             @endphp
-
                             <a href="{{ $isLocked ? '#' : route('user.courses.learning', ['slug' => $course->slug, 'contentId' => $content->id]) }}" 
-                               class="px-3 py-2 text-sm rounded flex items-center gap-2 transition relative
-                               {{ $isActive ? 'module-item active' : 'text-gray-400 hover:text-white hover:bg-gray-800' }}
-                               {{ $isLocked ? 'locked-item' : '' }}">
-                                
-                                @if($isLocked)
-                                    <i class="fas fa-lock text-xs text-gray-600"></i>
-                                @elseif($content->type == 'video')
-                                    <i class="fas fa-play-circle text-xs {{ $isActive ? 'animate-pulse' : '' }}"></i>
-                                @elseif($content->type == 'practice')
-                                    <i class="fas fa-code text-xs text-orange-400"></i>
-                                @else
-                                    <i class="fas fa-file-alt text-xs"></i>
-                                @endif
-
+                               class="px-3 py-2 text-sm rounded flex items-center gap-2 transition {{ $isActive ? 'module-item active' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} {{ $isLocked ? 'locked-item' : '' }}">
+                                @if($isLocked) <i class="fas fa-lock text-xs text-gray-600"></i>
+                                @else <i class="fas {{ $content->type == 'video' ? 'fa-play-circle' : 'fa-file-alt' }} text-xs"></i> @endif
                                 <span class="truncate flex-1">{{ $content->title }}</span>
                             </a>
                         @endforeach
@@ -288,7 +207,27 @@
 
     <script>
         const dbLang = "{{ $activeContent->compiler_lang ?? 'javascript' }}"; 
-        const dbSnippet = {!! json_encode($activeContent->snippet ?? '// Tulis kodemu disini...') !!};
+        const dbSnippet = {!! json_encode($activeContent->practice_snippet ?? '') !!};
+        var editor;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof ace !== 'undefined') {
+                editor = ace.edit("editor");
+                editor.setTheme("ace/theme/dracula");
+                
+                const modeMap = {
+                    'javascript': 'ace/mode/javascript', 'python': 'ace/mode/python',
+                    'php': 'ace/mode/php', 'html': 'ace/mode/html', 'css': 'ace/mode/css',
+                    'java': 'ace/mode/java', 'c++': 'ace/mode/c_cpp', 'cpp': 'ace/mode/c_cpp',
+                    'sql': 'ace/mode/sql', 'ruby': 'ace/mode/ruby'
+                };
+
+                editor.session.setMode(modeMap[dbLang.toLowerCase()] || 'ace/mode/javascript');
+                editor.setFontSize(14);
+                editor.setValue(dbSnippet);
+                editor.clearSelection(); 
+            }
+        });
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -297,72 +236,64 @@
             document.getElementById('tab-' + tabName).classList.add('active');
         }
 
-        var editor;
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof ace !== 'undefined') {
-                editor = ace.edit("editor");
-                editor.setTheme("ace/theme/dracula");
-                
-                let modeMap = {
-                    'javascript': 'ace/mode/javascript',
-                    'js': 'ace/mode/javascript',
-                    'php': 'ace/mode/php',
-                    'html': 'ace/mode/html',
-                    'css': 'ace/mode/css'
-                };
+        async function runCode() {
+            const btn = document.getElementById('btn-run');
+            const code = editor.getValue();
+            const consoleDiv = document.getElementById('console-output');
+            const previewDiv = document.getElementById('html-preview');
+            const lang = dbLang.toLowerCase();
 
-                let aceMode = modeMap[dbLang.toLowerCase()] || 'ace/mode/javascript';
-                editor.session.setMode(aceMode);
-                editor.setFontSize(14);
-                editor.setShowPrintMargin(false);
-                editor.setValue(dbSnippet);
-                editor.clearSelection(); 
+            consoleDiv.innerHTML = '<div class="text-cyan-400 italic">Compiling and running...</div>';
+            consoleDiv.classList.remove('hidden');
+            previewDiv.classList.add('hidden');
+
+            if(lang === 'html') {
+                consoleDiv.classList.add('hidden'); previewDiv.classList.remove('hidden');
+                previewDiv.innerHTML = '<iframe id="preview-frame" style="width:100%; height:100%; border:none;"></iframe>';
+                const doc = document.getElementById('preview-frame').contentDocument;
+                doc.open(); doc.write(code); doc.close();
+                return;
             }
-        });
 
-        function runCode() {
-            var code = editor.getValue();
-            var consoleDiv = document.getElementById('console-output');
-            var previewDiv = document.getElementById('html-preview');
-            
-            consoleDiv.innerHTML = '';
-            previewDiv.innerHTML = '';
-            
-            if(dbLang === 'html') {
-                consoleDiv.classList.add('hidden');
-                previewDiv.classList.remove('hidden');
-                previewDiv.innerHTML = '<iframe id="preview-frame"></iframe>';
-                var iframe = document.getElementById('preview-frame');
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                doc.open();
-                doc.write(code);
-                doc.close();
-            } else if (dbLang === 'javascript' || dbLang === 'js') {
-                previewDiv.classList.add('hidden');
-                consoleDiv.classList.remove('hidden');
-                consoleDiv.innerHTML += `<div><span class="text-blue-400">➜</span> <span class="text-cyan-300">Run</span> script.js</div>`;
-                try {
-                    let originalLog = console.log;
-                    let logs = [];
-                    console.log = function(...args) { logs.push(args.join(' ')); };
-                    eval(code); 
-                    console.log = originalLog;
-                    if(logs.length > 0) {
-                        logs.forEach(log => { consoleDiv.innerHTML += `<div class="text-white ml-2">> ${log}</div>`; });
-                    } else {
-                        consoleDiv.innerHTML += `<div class="text-gray-500 ml-2">Program selesai (tanpa output).</div>`;
-                    }
-                } catch (e) {
-                    consoleDiv.innerHTML += `<div class="text-red-400 ml-2">Error: ${e.message}</div>`;
+            // Piston API Logic
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            // Mapping identifiers for Piston API
+            const pistonMap = {
+                'javascript': 'js', 'js': 'js', 'python': 'python3', 'py': 'python3',
+                'php': 'php', 'java': 'java', 'cpp': 'cpp', 'c++': 'cpp', 'ruby': 'ruby'
+            };
+
+            try {
+                const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        language: pistonMap[lang] || lang,
+                        version: "*",
+                        files: [{ content: code }]
+                    })
+                });
+
+                const result = await response.json();
+                consoleDiv.innerHTML = '';
+
+                if (result.run) {
+                    const output = result.run.output || "Program finished with no output.";
+                    consoleDiv.innerHTML = `<div class="text-white whitespace-pre-wrap">${output}</div>`;
+                    if(result.run.stderr) consoleDiv.innerHTML += `<div class="text-red-400 mt-2">${result.run.stderr}</div>`;
+                } else {
+                    consoleDiv.innerHTML = '<div class="text-red-500 italic">Compilation error or server unavailable.</div>';
                 }
-            } else {
-                previewDiv.classList.add('hidden');
-                consoleDiv.classList.remove('hidden');
-                consoleDiv.innerHTML = `<div class="text-yellow-400 p-2">Simulasi untuk ${dbLang} butuh backend server.</div>`;
+            } catch (e) {
+                consoleDiv.innerHTML = `<div class="text-red-500">Error connecting to Piston API: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                const terminal = document.querySelector('.terminal-window');
+                terminal.scrollTop = terminal.scrollHeight;
             }
-            
-            let terminal = document.querySelector('.terminal-window');
-            terminal.scrollTop = terminal.scrollHeight;
         }
 
         function clearConsole() {

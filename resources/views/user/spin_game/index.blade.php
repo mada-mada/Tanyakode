@@ -770,9 +770,9 @@ closeResultBtn.addEventListener('click', function() {
     resultContainer.style.display = 'none';
 });
 
-viewVoucherBtn.addEventListener('click', function() {
-    window.location.href = '{{ route("user.profile.show") }}';
-});
+// viewVoucherBtn.addEventListener('click', function() {
+//     window.location.href = '{{ route("user.profiles.show", auth()->id()) }}';
+// });
 
 window.addEventListener('load', function() {
     if (!@json($canSpin)) {

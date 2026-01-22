@@ -52,26 +52,23 @@ class UserCourseController extends Controller
 
    public function learning($slug, $contentId = null)
 {
-    // 1. Ambil Data Course
     $course = Course::with(['modules' => function($q) {
         $q->orderBy('id', 'asc');
     }, 'modules.contents' => function($q) {
         $q->orderBy('id', 'asc');
     }])
     ->where(function($query) use ($slug) {
-        $query->where('slug', $slug)
-              ->orWhere('id', $slug);
+        $query->where('slug', $slug)->orWhere('id', $slug);
     })
     ->firstOrFail();
 
     $userId = Auth::id();
-
-    // 2. Cek/Buat Enrollment
     $enrollment = DB::table('course_enrollments')
                     ->where('user_id', $userId)
                     ->where('course_id', $course->id)
                     ->first();
 
+    // Auto-Enroll jika belum ada
     if (!$enrollment) {
         $enrollmentId = DB::table('course_enrollments')->insertGetId([
             'user_id' => $userId,
@@ -84,67 +81,46 @@ class UserCourseController extends Controller
         $enrollment = DB::table('course_enrollments')->where('id', $enrollmentId)->first();
     }
 
-    // 3. Logika Konten Aktif
     $activeContent = null;
-
     if ($contentId) {
+        // Prioritas 1: Sesuai ID yang diklik di sidebar/tombol next
         $activeContent = ModuleContent::find($contentId);
-        
-        // Simpan progress jika materi ditemukan
-        if ($activeContent) {
-            DB::table('course_enrollments')
-                ->where('id', $enrollment->id)
-                ->update(['last_content_id' => $contentId, 'updated_at' => now()]);
-        }
     } else {
-        // Resume dari history
+        // Prioritas 2: Resume dari database jika baru masuk
         if ($enrollment->last_content_id) {
             $activeContent = ModuleContent::find($enrollment->last_content_id);
         }
-
-        // Jika history null/tidak valid, ambil materi pertama
+        // Prioritas 3: Materi pertama jika semuanya kosong
         if (!$activeContent) {
-            if ($course->modules->isNotEmpty() && $course->modules->first()->contents->isNotEmpty()) {
-                $activeContent = $course->modules->first()->contents->first();
-                
-                // Simpan start point
-                DB::table('course_enrollments')
-                    ->where('id', $enrollment->id)
-                    ->update(['last_content_id' => $activeContent->id]);
-            }
+            $firstModule = $course->modules->first();
+            $activeContent = $firstModule ? $firstModule->contents->first() : null;
         }
     }
 
-    // [FIX PENTING] Jika Kursus Kosong (Tidak ada materi sama sekali)
-    // Kita buat object dummy atau redirect agar tidak error di View
     if (!$activeContent) {
-        return redirect()->route('user.courses.show', $course->slug)
-                         ->with('error', 'Kursus ini belum memiliki materi.');
+        return redirect()->route('user.courses.show', $course->slug)->with('error', 'Materi tidak ditemukan.');
     }
 
-    // 4. Cek Status Penyelesaian
-    // [UPDATE] Logika Auto-Complete (Materi Terakhir)
+    // Update progress terakhir di DB
+    DB::table('course_enrollments')
+        ->where('id', $enrollment->id)
+        ->update(['last_content_id' => $activeContent->id, 'updated_at' => now()]);
+
+    // Logika Auto-Complete (Cek materi terakhir)
     $lastModule = $course->modules->last();
     if ($lastModule) {
-        $lastContent = $lastModule->contents->last();
-        // Jika materi yang dibuka adalah materi terakhir -> Set Completed
-        if ($lastContent && $activeContent->id == $lastContent->id) {
-            DB::table('course_enrollments')
-                ->where('id', $enrollment->id)
-                ->update(['status' => 'completed']);
-            $enrollment->status = 'completed'; // Update variable lokal
+        $lastContentOfCourse = $lastModule->contents->last();
+        if ($lastContentOfCourse && $activeContent->id == $lastContentOfCourse->id) {
+            DB::table('course_enrollments')->where('id', $enrollment->id)->update(['status' => 'completed']);
+            $enrollment->status = 'completed';
         }
     }
 
-    $isCompleted = false;
-    if (isset($enrollment->status) && ($enrollment->status == 'completed' || $enrollment->status == 1)) {
-        $isCompleted = true;
-    }
+    $isCompleted = ($enrollment->status == 'completed' || $enrollment->status == 1);
 
     return view('user.courses.learning', [
-        'title' => $course->name,
         'course' => $course,
-        'activeContent' => $activeContent, // Pastikan ini tidak null (sudah dicek di atas)
+        'activeContent' => $activeContent,
         'isCompleted' => $isCompleted
     ]);
 }

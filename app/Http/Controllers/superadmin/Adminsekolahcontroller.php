@@ -34,13 +34,13 @@ class Adminsekolahcontroller extends Controller
             'school_id' => 'required|exists:schools,id',
         ]);
 
-        User::create([
-            'full_name' => $request->full_name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'school_admin',
-            'school_id' => $request->school_id,
+       User::create([
+             'full_name' => $request->full_name,
+             'username' => $request->username,
+             'email' => $request->email,
+             'password' => $request->password, // Biarkan Model yang melakukan hashing otomatis
+             'role' => 'school_admin',
+             'school_id' => $request->school_id,
         ]);
 
         // PERBAIKAN: Gunakan 'superadmin.adminsekolah.index'
