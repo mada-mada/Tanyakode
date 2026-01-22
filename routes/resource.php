@@ -1,9 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Authcontroller;
+use App\Http\Controllers\AuthController;
 
-Route::get('/login', [Authcontroller::class, 'login'])->name('login');
-Route::post('/login', [Authcontroller::class, 'loginPost'])->name('login.post');
-
-?>
+Route::get('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/login', [AuthController::class, 'loginPost'])->name('login.post');
