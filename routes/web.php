@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\ModuleContentController;
 use App\Http\Middleware\CekUserIsActive;
 
-// --- GROUP GUEST (Belum Login) ---
+
 Route::middleware(['guest'])->group(function () {
     Route::get('/', function () { return view('welcome'); });
     Route::get('/login', [AuthController::class, 'login'])->name('login');
@@ -44,13 +44,11 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/reset-password', [AuthController::class, 'updateResetPassword'])->name('password.reset.update');
 });
 
-// --- GROUP AUTH (Sudah Login) ---
 Route::middleware(['auth'])->group(function() {
 
-    // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // OTP Verification (Aktivasi Akun)
+    // OTP & Security
     Route::get('/verify-otp', [OtpController::class, 'index'])->name('otp.verification');
     Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.check');
     Route::post('/resend-otp', [OtpController::class, 'resend'])->name('otp.resend');
@@ -62,10 +60,24 @@ Route::middleware(['auth'])->group(function() {
     Route::post('/change-password/verify', [AuthController::class, 'verifyAndChangePassword'])->name('password.verify');
     Route::post('/change-password/cancel', [AuthController::class, 'cancelChangePassword'])->name('password.cancel');
 
-    // Middleware Cek User Active
+    Route::get('/notifications/unread-count', function () {
+        return DB::table('notifications')
+            ->where('notifiable_id', auth()->id())
+            ->whereNull('read_at')
+            ->count();
+    });
+
+    Route::post('/notifications/read-all', function () {
+        DB::table('notifications')
+            ->where('notifiable_id', auth()->id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+        return back();
+    });
+
     Route::middleware([CekUserIsActive::class])->group(function () {
 
-        // ... (Sisa route admin/student/sekolah biarkan sama) ...
+        // --- SUPER ADMIN ---
         Route::middleware(['role:super_admin'])
             ->prefix('superadmin')
             ->name('superadmin.')
@@ -82,39 +94,54 @@ Route::middleware(['auth'])->group(function() {
             ->group(function () {
                 Route::get('/dashboard', function () { return view('user.dashboard'); })->name('dashboard');
                 Route::resource('profiles', UserController::class)->only(['show', 'edit', 'update']);
+
+                // Daftar course
                 Route::get('/courses', [\App\Http\Controllers\User\UserCourseController::class, 'index'])->name('courses.index');
-                Route::get('course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
-                Route::get('course/{slug}/learning/{contentId?}', [UserCourseController::class, 'learning'])->name('courses.learning');
+                Route::get('user/course/{slug}', [UserCourseController::class, 'show'])->name('courses.show');
+                // Halaman sukses bayar
                 Route::get('/payment/success', [\App\Http\Controllers\User\PaymentController::class, 'success'])->name('payment.success');
                 Route::post('/payment/retry/{id}', [App\Http\Controllers\User\PaymentController::class, 'retry'])->name('payment.retry');
                 Route::get('/payment/failed', [App\Http\Controllers\User\PaymentController::class, 'failed'])->name('payment.failed');
                 Route::post('/payment/process', [App\Http\Controllers\User\PaymentController::class, 'processPayment'])->name('payment.process');
-                Route::post('/payment/check-voucher', [App\Http\Controllers\User\PaymentController::class, 'checkVoucher'])->name('payment.check_voucher'); 
+                Route::get('user/course/{slug}/learning', [UserCourseController::class, 'learning'])->name('courses.learning');
             });
 
+        // --- GAME SPIN WHEEL ---
         Route::middleware(['role:user'])->group(function () {
             Route::get('/spin-wheel', [SpinGameController::class, 'index'])->name('user.spin');
             Route::post('/spin-wheel-process', [SpinGameController::class, 'spinProcess'])->name('user.spin.process');
         });
 
-        Route::middleware(['role:admin'])->name('admin.')->group(function () {
-            Route::get('/dashboard-admin', function () { return view('admin.dashboard'); })->name('dashboard');
-        });
+        // --- ADMIN BIASA ---
+        Route::middleware(['role:admin'])
+            ->name('admin.')
+            ->group(function () {
+                Route::get('/dashboard-admin', function () { return view('admin.dashboard'); })->name('dashboard');
+            });
 
-        Route::middleware(['role:school_admin'])->name('school_admin.')->group(function () {
-            Route::get('/dashboard-sekolah', function () { return 'Halaman admin sekolah'; })->name('dashboard');
-        });
+        // --- SCHOOL ADMIN ---
+        Route::middleware(['role:school_admin'])
+            ->name('school_admin.')
+            ->group(function () {
+                Route::get('/dashboard-sekolah', function () { return 'Halaman admin sekolah'; })->name('dashboard');
+            });
 
         Route::middleware(['role:admin,school_admin'])->group(function () {
             Route::resource('courses', CourseController::class);
+
+            // 2. Module Routes
             Route::post('courses/{course}/modules', [ModuleController::class, 'store'])->name('modules.store');
             Route::get('modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
             Route::put('modules/{module}', [ModuleController::class, 'update'])->name('modules.update');
             Route::delete('modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy');
+
+            // 3. Module Content Routes
             Route::post('modules/{module}/contents', [ModuleContentController::class, 'store'])->name('contents.store');
             Route::get('contents/{content}/edit', [ModuleContentController::class, 'edit'])->name('contents.edit');
             Route::put('contents/{content}', [ModuleContentController::class, 'update'])->name('contents.update');
             Route::delete('contents/{content}', [ModuleContentController::class, 'destroy'])->name('contents.destroy');
         });
-    }); 
-});
+
+    }); // End CekUserIsActive
+
+}); // End Auth Group

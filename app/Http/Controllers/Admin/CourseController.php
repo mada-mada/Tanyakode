@@ -14,7 +14,6 @@ class CourseController extends Controller
 {
     public function index()
     {
-        /** @var User $user */
         $user = Auth::user();
 
         $courses = Course::when($user->role === 'school_admin', function ($query) use ($user) {
@@ -33,7 +32,6 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        /** @var User $user */
         $user = Auth::user();
 
         $validated = $request->validate([
@@ -75,7 +73,6 @@ class CourseController extends Controller
 
     public function edit(Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
@@ -85,7 +82,6 @@ class CourseController extends Controller
     // --- BAGIAN UPDATE YANG DIMODIFIKASI ---
     public function update(Request $request, Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
@@ -108,19 +104,6 @@ class CourseController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
 
-        // --- LOGIKA GANTI GAMBAR ---
-        if ($request->hasFile('thumbnail')) {
-            // 1. Hapus gambar lama jika ada
-            if ($course->thumbnail_url && Storage::disk('public')->exists($course->thumbnail_url)) {
-                Storage::disk('public')->delete($course->thumbnail_url);
-            }
-
-            // 2. Upload gambar baru
-            $path = $request->file('thumbnail')->store('thumbnails', 'public');
-            
-            // 3. Masukkan path baru ke array validated untuk di-update
-            $validated['thumbnail_url'] = $path;
-        }
 
         $course->update($validated);
         return redirect()->route('courses.index')->with('success', 'Kursus berhasil diperbarui.');
@@ -129,7 +112,6 @@ class CourseController extends Controller
     // --- BAGIAN DESTROY YANG DIMODIFIKASI ---
     public function destroy(Course $course)
     {
-        /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'school_admin' && $course->school_id !== $user->school_id) abort(403);
 
