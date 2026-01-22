@@ -196,6 +196,7 @@
         setInterval(fetchNotif, 10000); // Poll setiap 10 detik
     });
 </script>
+@stack('scripts') 
 @yield('js')
 </body>
 </html>

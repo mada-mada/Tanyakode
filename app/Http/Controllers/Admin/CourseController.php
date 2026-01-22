@@ -139,16 +139,27 @@ class CourseController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
+        
+        // 1. Query Dasar
         $courseQuery = Course::query();
+        $studentQuery = User::where('role', 'student');
 
+        // 2. Filter berdasarkan Role
         if ($user->role === 'school_admin') {
+            // Jika Admin Sekolah: Filter berdasarkan school_id milik user
             $courseQuery->where('school_id', $user->school_id);
-        } else if ($user->role === 'admin') {
+            $studentQuery->where('school_id', $user->school_id);
+        } else {
+            // Jika Admin General: Ambil kursus yang tidak punya sekolah (umum/pusat)
+            // Dan ambil total seluruh siswa di sistem (atau sesuaikan kebutuhan)
             $courseQuery->whereNull('school_id');
         }
 
+        // 3. Eksekusi Hitung
         $totalCourses = $courseQuery->count();
-        return view('admin.dashboard', compact('totalCourses'));
+        $totalStudents = $studentQuery->count();
+
+        return view('admin.dashboard', compact('totalCourses', 'totalStudents'));
     }
 
     public function show(Course $course)
