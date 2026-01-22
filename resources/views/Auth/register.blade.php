@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,9 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif']
+                    },
                     colors: {
                         brand: {
                             blue: '#0066FF',
@@ -27,25 +30,45 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body class="bg-gray-50 h-screen flex items-center justify-center p-4">
 
     <div class="bg-white w-full max-w-5xl h-[650px] md:h-[600px] rounded-2xl shadow-2xl overflow-hidden flex relative">
 
-        <div class="hidden md:flex w-1/2 bg-brand-dark text-white flex-col justify-between p-12 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]"></div>
-            <div class="absolute bottom-[-50px] left-[-50px] w-64 h-64 bg-brand-blue rounded-full blur-[80px] opacity-50"></div>
+        <div
+            class="hidden md:flex w-1/2 bg-brand-dark text-white flex-col justify-between p-12 relative overflow-hidden">
+            <div
+                class="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]">
+            </div>
+            <div
+                class="absolute bottom-[-50px] left-[-50px] w-64 h-64 bg-brand-blue rounded-full blur-[80px] opacity-50">
+            </div>
 
             <div class="relative z-10">
                 <a href="{{ url('/') }}" class="flex items-center gap-3 mb-6 hover:opacity-80 transition">
-                    <div class="h-10 w-10 bg-brand-blue rounded flex items-center justify-center font-bold text-xl">T</div>
+                    <div class="h-10 w-10 bg-brand-blue rounded flex items-center justify-center font-bold text-xl">T
+                    </div>
                     <span class="text-2xl font-bold tracking-wide">
                         <span class="text-white">TANYA</span><span class="text-brand-sky">KODE</span>
                     </span>
@@ -60,13 +83,16 @@
                     <i class="fas fa-users text-yellow-400 text-xl mr-2"></i>
                     <h3 class="font-bold text-sm text-yellow-400 uppercase">Komunitas</h3>
                 </div>
-                <p class="text-sm italic text-blue-100">"Belajar coding sendirian itu berat, bersama TanyaKode jadi lebih mudah."</p>
+                <p class="text-sm italic text-blue-100">"Belajar coding sendirian itu berat, bersama TanyaKode jadi
+                    lebih mudah."</p>
             </div>
         </div>
 
-        <div class="w-full md:w-1/2 bg-white flex flex-col justify-start p-8 md:p-12 pt-24 md:pt-20 overflow-y-auto relative">
+        <div
+            class="w-full md:w-1/2 bg-white flex flex-col justify-start p-8 md:p-12 pt-24 md:pt-20 overflow-y-auto relative">
 
-            <a href="{{ url('/') }}" class="md:hidden text-gray-500 mb-6 flex items-center text-sm hover:text-brand-blue transition absolute top-6 left-6">
+            <a href="{{ url('/') }}"
+                class="md:hidden text-gray-500 mb-6 flex items-center text-sm hover:text-brand-blue transition absolute top-6 left-6">
                 <i class="fas fa-arrow-left mr-2"></i> Kembali
             </a>
 
@@ -76,9 +102,11 @@
                 </div>
             @endif
 
-           <div id="tab-container" class="flex bg-gray-100 p-1 rounded-full mb-8 w-max mx-auto md:mx-0 mt-0 md:mt-0 ">
-                <button onclick="switchTab('login')" id="tab-login" class="px-6 py-2 rounded-full text-sm font-bold transition-all bg-white text-brand-blue shadow-sm">Masuk</button>
-                <button onclick="switchTab('register')" id="tab-register" class="px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">Daftar</button>
+            <div id="tab-container" class="flex bg-gray-100 p-1 rounded-full mb-8 w-max mx-auto md:mx-0 mt-0 md:mt-0 ">
+                <button onclick="switchTab('login')" id="tab-login"
+                    class="px-6 py-2 rounded-full text-sm font-bold transition-all bg-white text-brand-blue shadow-sm">Masuk</button>
+                <button onclick="switchTab('register')" id="tab-register"
+                    class="px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">Daftar</button>
             </div>
 
             <div id="form-login" class="block animate-fade-in">
@@ -91,30 +119,43 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <div class="relative">
-                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="email" name="email" value="{{ old('email') }}" placeholder="contoh@email.com" class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('email') border-red-500 @enderror" required>
+                            <i
+                                class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                placeholder="contoh@email.com"
+                                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('email') border-red-500 @enderror"
+                                required>
                         </div>
-                        @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('email')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-sm font-medium text-gray-700">Password</label>
                             @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-xs text-brand-blue hover:underline">Lupa Password?</a>
+                                <a href="{{ route('password.request') }}"
+                                    class="text-xs text-brand-blue hover:underline">Lupa Password?</a>
                             @endif
                         </div>
                         <div class="relative">
                             <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" name="password" id="login-pass" placeholder="••••••••" class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('password') border-red-500 @enderror" required>
-                            <button type="button" onclick="togglePassword('login-pass', this)" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <input type="password" name="password" id="login-pass" placeholder="••••••••"
+                                class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('password') border-red-500 @enderror"
+                                required>
+                            <button type="button" onclick="togglePassword('login-pass', this)"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('password')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <button type="submit" class="w-full bg-brand-blue text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg transform active:scale-95">
+                    <button type="submit"
+                        class="w-full bg-brand-blue text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg transform active:scale-95">
                         Masuk Sekarang
                     </button>
                 </form>
@@ -131,46 +172,69 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <div class="relative">
                             <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" name="username" value="{{ old('username') }}" placeholder="Username Kamu" class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('username') border-red-500 @enderror" required>
+                            <input type="text" name="username" value="{{ old('username') }}"
+                                placeholder="Username Kamu"
+                                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('username') border-red-500 @enderror"
+                                required>
                         </div>
-                        @error('username') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('username')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <div class="relative">
-                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="email" name="email" value="{{ old('email') }}" placeholder="contoh@email.com" class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('email') border-red-500 @enderror" required>
+                            <i
+                                class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                placeholder="contoh@email.com"
+                                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('email') border-red-500 @enderror"
+                                required>
                         </div>
-                        @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('email')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" name="password" id="reg-pass" placeholder="Buat password kuat" class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('password') border-red-500 @enderror" required>
-                            <button type="button" onclick="togglePassword('reg-pass', this)" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i
+                                class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" name="password" id="reg-pass" placeholder="Buat password kuat"
+                                class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition @error('password') border-red-500 @enderror"
+                                required>
+                            <button type="button" onclick="togglePassword('reg-pass', this)"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('password')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
                         <div class="relative">
-                            <i class="fas fa-check-circle absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" name="password_confirmation" id="reg-pass-conf" placeholder="Ulangi password" class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition" required>
+                            <i
+                                class="fas fa-check-circle absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" name="password_confirmation" id="reg-pass-conf"
+                                placeholder="Ulangi password"
+                                class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:border-brand-blue outline-none transition"
+                                required>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-brand-dark text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition shadow-lg transform active:scale-95">
+                    <button type="submit"
+                        class="w-full bg-brand-dark text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition shadow-lg transform active:scale-95">
                         Daftar Gratis
                     </button>
                 </form>
                 <div class="mt-6 text-center text-xs text-gray-500">
-                    Dengan mendaftar, kamu menyetujui <a href="#" class="text-brand-blue hover:underline">Syarat & Ketentuan</a> kami.
+                    Dengan mendaftar, kamu menyetujui <a href="#" class="text-brand-blue hover:underline">Syarat
+                        & Ketentuan</a> kami.
                 </div>
             </div>
 
@@ -220,10 +284,11 @@
         // LOGIKA TAMBAHAN:
         // Jika user gagal Register (ada error username/password_confirmation), otomatis pindah ke tab Register saat halaman reload.
         document.addEventListener("DOMContentLoaded", function() {
-            @if($errors->has('username') || $errors->has('password_confirmation') || ($errors->has('email') && old('username')))
+            @if ($errors->has('username') || $errors->has('password_confirmation') || ($errors->has('email') && old('username')))
                 switchTab('register');
             @endif
         });
     </script>
 </body>
+
 </html>

@@ -36,7 +36,8 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">Nama Lengkap</label>
-                                            <input type="text" name="full_name" class="form-control @error('full_name') is-invalid @enderror"
+                                            <input type="text" name="full_name"
+                                                class="form-control @error('full_name') is-invalid @enderror"
                                                 value="{{ old('full_name', $user->full_name) }}" required>
                                             @error('full_name')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -44,7 +45,8 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">Username</label>
-                                            <input type="text" name="username" class="form-control @error('username') is-invalid @enderror"
+                                            <input type="text" name="username"
+                                                class="form-control @error('username') is-invalid @enderror"
                                                 value="{{ old('username', $user->username) }}" required>
                                             @error('username')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -52,7 +54,8 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">Email</label>
-                                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                                            <input type="email" name="email"
+                                                class="form-control @error('email') is-invalid @enderror"
                                                 value="{{ old('email', $user->email) }}" required>
                                             @error('email')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -60,7 +63,8 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">Domisili</label>
-                                            <input type="text" name="domisili" class="form-control @error('domisili') is-invalid @enderror"
+                                            <input type="text" name="domisili"
+                                                class="form-control @error('domisili') is-invalid @enderror"
                                                 value="{{ old('domisili', $user->domisili) }}">
                                             @error('domisili')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -72,7 +76,8 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">NIS</label>
-                                            <input type="text" name="nis" class="form-control @error('nis') is-invalid @enderror"
+                                            <input type="text" name="nis"
+                                                class="form-control @error('nis') is-invalid @enderror"
                                                 value="{{ old('nis', $user->nis) }}">
                                             @error('nis')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -80,7 +85,8 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-bold">NISN</label>
-                                            <input type="text" name="nisn" class="form-control @error('nisn') is-invalid @enderror"
+                                            <input type="text" name="nisn"
+                                                class="form-control @error('nisn') is-invalid @enderror"
                                                 value="{{ old('nisn', $user->nisn) }}">
                                             @error('nisn')
                                                 <div class="invalid-feedback">{{ $message }}</div>

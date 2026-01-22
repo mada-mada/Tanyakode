@@ -966,13 +966,35 @@
                 opacity: 1;
             }
 
-            @media (max-width: 992px) {
+            @media (max-width: 1200px) {
+                .container {
+                    max-width: 960px;
+                }
+
                 .hero-title {
-                    font-size: 2.8rem;
+                    font-size: 3rem;
+                }
+
+                .benefits-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (max-width: 992px) {
+                .container {
+                    max-width: 720px;
+                }
+
+                .hero-title {
+                    font-size: 2.5rem;
+                }
+
+                .hero-subtitle {
+                    font-size: 1.2rem;
                 }
 
                 .section-title {
-                    font-size: 2.2rem;
+                    font-size: 2rem;
                 }
 
                 .path-step {
@@ -992,66 +1014,195 @@
                 .mobile-nav {
                     display: flex;
                 }
+
+                .footer-content {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 40px;
+                }
+
+                .vision-mission {
+                    grid-template-columns: 1fr;
+                }
             }
 
             @media (max-width: 768px) {
+                .container {
+                    max-width: 540px;
+                    padding: 0 20px;
+                }
+
+                .hero {
+                    padding: 60px 0 40px;
+                }
+
                 .hero-title {
-                    font-size: 2.3rem;
+                    font-size: 2rem;
+                    line-height: 1.3;
                 }
 
                 .hero-subtitle {
-                    font-size: 1.1rem;
+                    font-size: 1rem;
                 }
 
                 .hero-buttons {
                     flex-direction: column;
-                    align-items: center;
+                    width: 100%;
+                }
+
+                .hero-buttons .btn {
+                    width: 100%;
                 }
 
                 .section {
-                    padding: 60px 0;
-                }
-
-                .story-section {
-                    padding: 40px 25px;
-                }
-
-                .vm-card {
-                    padding: 30px;
-                }
-
-                .articles-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .stats {
-                    gap: 30px;
-                }
-
-                .stat-number {
-                    font-size: 2rem;
-                }
-            }
-
-            @media (max-width: 576px) {
-                .container {
-                    padding: 0 15px;
-                }
-
-                .hero-title {
-                    font-size: 2rem;
+                    padding: 50px 0;
                 }
 
                 .section-title {
                     font-size: 1.8rem;
                 }
 
-                .btn {
-                    padding: 10px 20px;
+                .story-section {
+                    padding: 30px 20px;
+                }
+
+                .story-title {
+                    font-size: 1.5rem;
+                }
+
+                .story-text {
+                    font-size: 1rem;
+                }
+
+                .vm-card {
+                    padding: 25px;
+                }
+
+                .articles-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .benefits-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .stats {
+                    gap: 25px;
+                    flex-direction: column;
+                }
+
+                .stat-number {
+                    font-size: 2rem;
+                }
+
+                .footer-content {
+                    grid-template-columns: 1fr;
+                    gap: 30px;
+                }
+
+                .path-container {
+                    gap: 20px;
                 }
 
                 .testimonial-card {
                     padding: 25px;
+                }
+            }
+
+            @media (max-width: 576px) {
+                .container {
+                    max-width: 100%;
+                    padding: 0 15px;
+                }
+
+                .logo-text {
+                    font-size: 1.5rem;
+                }
+
+                .logo-img {
+                    height: 40px;
+                }
+
+                .hero-title {
+                    font-size: 1.75rem;
+                }
+
+                .hero-badge {
+                    font-size: 0.85rem;
+                    padding: 8px 16px;
+                }
+
+                .section-title {
+                    font-size: 1.5rem;
+                }
+
+                .section {
+                    padding: 40px 0;
+                }
+
+                .btn {
+                    padding: 10px 20px;
+                    font-size: 0.9rem;
+                }
+
+                .testimonial-card {
+                    padding: 20px;
+                }
+
+                .testimonial-text {
+                    font-size: 0.95rem;
+                }
+
+                .faq-question {
+                    font-size: 0.95rem;
+                    padding: 15px;
+                }
+
+                .faq-answer {
+                    font-size: 0.9rem;
+                    padding: 15px;
+                }
+
+                .article-title {
+                    font-size: 1.1rem;
+                }
+
+                .benefit-title {
+                    font-size: 1.1rem;
+                }
+
+                .path-title {
+                    font-size: 1rem;
+                }
+
+                .vm-title {
+                    font-size: 1.2rem;
+                }
+
+                .stat-number {
+                    font-size: 1.8rem;
+                }
+
+                .stat-label {
+                    font-size: 0.9rem;
+                }
+            }
+
+            @media (max-width: 360px) {
+                .hero-title {
+                    font-size: 1.5rem;
+                }
+
+                .section-title {
+                    font-size: 1.3rem;
+                }
+
+                .btn {
+                    padding: 8px 16px;
+                    font-size: 0.85rem;
+                }
+
+                .story-section {
+                    padding: 20px 15px;
                 }
             }
     </style>
