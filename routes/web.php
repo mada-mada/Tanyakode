@@ -16,6 +16,7 @@ use App\Http\Controllers\Adminsekolah\SchoolTokenController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\ModuleContentController;
+use App\Http\Controllers\ArticleController;
 
 // --- IMPORT ADMIN SEKOLAH ---
 use App\Http\Controllers\AdminSekolah\AdminSekolahCourseController;
@@ -41,6 +42,9 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/forgot-password/verify', [AuthController::class, 'verifyForgotOtp'])->name('password.forgot.verify');
     Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset.form');
     Route::post('/reset-password', [AuthController::class, 'updateResetPassword'])->name('password.reset.update');
+
+    Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articles.show');
 });
 
 // --- AUTHENTICATED ROUTES ---

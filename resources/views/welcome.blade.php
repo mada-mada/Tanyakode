@@ -1040,7 +1040,7 @@
         <div class="container">
             <div class="nav-container">
                 <a href="#" class="logo">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-img">
+                 <img src="{{ asset('images/logoputih.jpg') }}" alt="Logo" class="logo-img">
                     <div class="logo-text">Tanya<span>Kode</span></div>
                 </a>
                 
@@ -1489,7 +1489,7 @@
             <div class="footer-content">
                 <div class="footer-about">
                     <div class="footer-logo">
-                        <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="footer-logo-img">
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="footer-logo-img">
                         <div class="footer-logo-text">TanyaKode</div>
                     </div>
                     <p class="footer-description">
