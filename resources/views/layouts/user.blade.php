@@ -265,7 +265,7 @@
                 </div>
 
                 <div class="nav-item {{ Request::is('user/payment*') ? 'active' : '' }}">
-                    <a href="#">
+                    <a href="{{ route('user.payments.index') }}">
                         <i class="fa-solid fa-credit-card"></i>
                         <span>Pembayaran</span>
                     </a>
@@ -278,8 +278,8 @@
                     </a>
                 </div>
 
-                <div class="nav-item">
-                    <a href="#" onclick="markNotificationsRead()">
+                <div class="nav-item {{ Request::is('user/notifications*') ? 'active' : '' }}">
+                    <a href="{{ route('user.notifications.index') }}">
                         <i class="fa-solid fa-bell"></i>
                         <span>Notifikasi</span>
                         <span id="notif-badge" class="notification-badge" style="display:none"></span>

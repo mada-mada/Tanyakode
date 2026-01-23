@@ -11,6 +11,7 @@ use App\Http\Controllers\Superadmin\Superadmin_sekolahcontroller;
 use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\SpinGameController;
 use App\Http\Controllers\User\UserCourseController;
+use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\Adminsekolah\SchoolTokenController;
 // --- IMPORT ADMIN GENERAL (JANGAN DIHAPUS) ---
 use App\Http\Controllers\Admin\CourseController;
@@ -67,22 +68,8 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/change-password/cancel', [AuthController::class, 'cancelChangePassword'])->name('password.cancel');
 
   // Notifications
-  Route::get('/notifications/unread-count', function () {
-    try {
-      $count = DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->count();
-      return response()->json(['count' => $count]);
-    } catch (\Exception $e) {
-      return response()->json(['count' => 0], 500);
-    }
-  });
-  Route::post('/notifications/read-all', function () {
-    try {
-      DB::table('notifications')->where('notifiable_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
-      return response()->json(['status' => 'success']);
-    } catch (\Exception $e) {
-      return response()->json(['status' => 'error'], 500);
-    }
-  });
+  Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+  Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
 
   Route::middleware([CekUserIsActive::class])->group(function () {
 
@@ -112,11 +99,15 @@ Route::middleware(['auth'])->group(function () {
       Route::post('/join-school', [UserController::class, 'joinSchool'])->name('join_school');
 
       // Payment
+      Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
       Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
       Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
       Route::post('/payment/retry/{id}', [PaymentController::class, 'retry'])->name('payment.retry');
       Route::post('/payment/process', [PaymentController::class, 'processPayment'])->name('payment.process');
       Route::post('/payment/check-voucher', [PaymentController::class, 'checkVoucher'])->name('payment.check_voucher');
+
+      // Notifications
+      Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     });
 
     // 3. ADMIN BIASA (GENERAL)
